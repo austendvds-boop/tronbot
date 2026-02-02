@@ -1,0 +1,24 @@
+{
+  "columns": [
+    {
+      "id": 1,
+      "title": "Backlog",
+      "cards": []
+    },
+    {
+      "id": 2,
+      "title": "To Do",
+      "cards": []
+    },
+    {
+      "id": 3,
+      "title": "In Progress",
+      "cards": []
+    },
+    {
+      "id": 4,
+      "title": "Done",
+      "cards": []
+    }
+  ]
+}
