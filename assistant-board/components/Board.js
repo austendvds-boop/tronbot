@@ -20,7 +20,7 @@ const moveCardInBoard = (currentBoard, source, destination) => {
   return newBoard;
 };
 
-export default function Board({ board: initialBoard }) {
+export default function Board({ board: initialBoard, cronJobs = [] }) {
   const [board, setBoard] = useState(initialBoard);
 
   const columnLookup = useMemo(() => {
@@ -34,8 +34,8 @@ export default function Board({ board: initialBoard }) {
   const backlogCards = columnLookup['Backlog'] || [];
   const todoCards = columnLookup['To Do'] || [];
   const inProgressCards = columnLookup['In Progress'] || [];
+  const totalCards = board.columns.reduce((sum, column) => sum + column.cards.length, 0);
 
-  // Load saved board from localStorage if present
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('assistantBoard');
@@ -77,57 +77,70 @@ export default function Board({ board: initialBoard }) {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1 style={{ textAlign: 'center' }}>Assistant Task Board</h1>
-      <div
-        style={{
-          maxWidth: '960px',
-          margin: '0 auto 20px',
-          padding: '12px 18px',
-          borderRadius: '12px',
-          background: '#111',
-          color: '#f0f0f0',
-          fontSize: '0.95rem',
-          boxShadow: '0 0 20px rgba(0,0,0,0.25)'
-        }}
-      >
-        <p>
-          This board tracks the work I’m doing for DVDS. “Done” lists shipped items, “Backlog” holds tasks you can queue, and the other
-          columns show what’s cooking right now.
-        </p>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+    <div className="board-page">
+      <div className="board-header">
+        <div>
+          <h1>Assistant Task Board</h1>
+          <p>
+            This is your interactive Trello-style workspace. Drag cards between Backlog, To Do, In Progress, and Done. Cards persist locally so you
+            can track what I’ve completed and what’s ready to queue.
+          </p>
+        </div>
+        <div className="board-stats">
           <div>
-            <strong>Done:</strong>
-            <ul>
-              {doneCards.map((card) => (
-                <li key={card.id}>{card.title}</li>
-              ))}
-            </ul>
+            <strong>{totalCards}</strong>
+            <span>tasks total</span>
           </div>
           <div>
-            <strong>Ready to queue:</strong>
-            <ul>
-              {backlogCards.map((card) => (
-                <li key={card.id}>{card.title}</li>
-              ))}
-            </ul>
+            <strong>{doneCards.length}</strong>
+            <span>completed</span>
+          </div>
+          <div>
+            <strong>{todoCards.length + inProgressCards.length}</strong>
+            <span>active</span>
           </div>
         </div>
       </div>
-      <div style={{ marginBottom: '20px', color: '#d0d0d0' }}>
-        <p>
-          In Progress: {inProgressCards.length} task(s) · To Do: {todoCards.length} task(s)
-        </p>
+
+      <div className="dashboard-layout">
+        <section className="panel summary">
+          <h3>Ready to queue</h3>
+          <div className="summary-list">
+            {backlogCards.map((card) => (
+              <div key={card.id} className="summary-item">
+                <span>{card.title}</span>
+              </div>
+            ))}
+            {!backlogCards.length && <p className="empty">No backlog items right now.</p>}
+          </div>
+        </section>
+        <section className="panel cron-panel">
+          <h3>Scheduled cron jobs</h3>
+          <ul className="cron-list">
+            {cronJobs.map((cronJob) => (
+              <li key={cronJob.id}>
+                <div className="cron-row">
+                  <strong>{cronJob.name}</strong>
+                  <span>{cronJob.schedule}</span>
+                </div>
+                <p className="cron-status">{cronJob.status}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
-      <KanbanBoard
-        initialBoard={board}
-        allowAddCard={{ on: 'top', prepend: true }}
-        allowRemoveCard
-        allowRenameColumn
-        onCardDragEnd={handleCardMove}
-        onNewCard={handleCardNew}
-        onCardRemove={handleCardDelete}
-      />
+
+      <div className="kanban-wrapper">
+        <KanbanBoard
+          initialBoard={board}
+          allowAddCard={{ on: 'top', prepend: true }}
+          allowRemoveCard
+          allowRenameColumn
+          onCardDragEnd={handleCardMove}
+          onNewCard={handleCardNew}
+          onCardRemove={handleCardDelete}
+        />
+      </div>
     </div>
   );
 }

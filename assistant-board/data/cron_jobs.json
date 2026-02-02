@@ -1,0 +1,20 @@
+[
+  {
+    "id": "villa-siena-payments",
+    "name": "Villa Siena payment scheduler",
+    "schedule": "daily 05:00 MST via scripts/add_villa_siena_schedule.py",
+    "status": "Up to date—calendar reflects all due dates"
+  },
+  {
+    "id": "email-auto-filter",
+    "name": "Gmail auto filters",
+    "schedule": "every 15 minutes via scripts/email_auto_filter.py",
+    "status": "Waiting on IMAP app password for reliable labeling"
+  },
+  {
+    "id": "nightly-parent-digest",
+    "name": "Nightly parent briefing",
+    "schedule": "daily 22:00 MST via scripts/nightly_parent_emails.py",
+    "status": "Collects highlights and pastes them into your inbox"
+  }
+]
