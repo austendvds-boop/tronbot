@@ -97,7 +97,8 @@ export default async function handler(req, res) {
 }
 
 async function fetchAppointments(account, baseUrl, minDate, maxDate) {
-  const auth = Buffer.from(`${account.userId}:${account.apiKey}`).toString('base64');
+  // Use btoa for base64 encoding (works in both Node and Edge runtime)
+  const auth = btoa(`${account.userId}:${account.apiKey}`);
   
   const url = `${baseUrl}/appointments?minDate=${minDate}&maxDate=${maxDate}&max=100`;
   
