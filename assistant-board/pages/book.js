@@ -25,6 +25,7 @@ export default function Booking() {
   const [location, setLocation] = useState(null);
   const [pkg, setPkg] = useState(null);
   const [times, setTimes] = useState([]);
+  const [timeFilter, setTimeFilter] = useState('all');
 
   const detectLocation = () => {
     const input = city.toLowerCase();
@@ -115,6 +116,7 @@ export default function Booking() {
     );
   }
 
+  // Step 3: Select Times with tabs
   if (step === 3) {
     // Check if multiple lessons per week selected
     const hasMultiplePerWeek = () => {
@@ -130,6 +132,33 @@ export default function Booking() {
     };
 
     const violation = hasMultiplePerWeek();
+
+    // Filter times based on tab
+    const filteredTimes = mockTimes.map((t, i) => ({...t, index: i})).filter(t => {
+      const date = new Date(t.date);
+      const day = date.getDay(); // 0=Sun, 6=Sat
+      const hour = parseInt(t.time);
+      const isPM = t.time.includes('pm');
+      const isAfternoon = isPM && hour >= 1;
+      const isMorning = !isPM || (isPM && hour === 12);
+      
+      if (timeFilter === 'weekend') return day === 0 || day === 6;
+      if (timeFilter === 'afternoon') return (day >= 1 && day <= 5) && isAfternoon;
+      if (timeFilter === 'morning') return (day >= 1 && day <= 5) && isMorning;
+      return true;
+    });
+
+    const tabStyle = (active) => ({
+      flex: 1,
+      padding: '12px 8px',
+      border: 'none',
+      borderRadius: '8px',
+      background: active ? '#238636' : '#30363d',
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: '13px',
+      cursor: 'pointer'
+    });
 
     return (
       <div style={styles.container}>
@@ -148,19 +177,28 @@ export default function Booking() {
               </p>
             </div>
           )}
+          
+          {/* Filter Tabs */}
+          <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
+            <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All Times</button>
+            <button style={tabStyle(timeFilter === 'morning')} onClick={() => setTimeFilter('morning')}>Morning M-F</button>
+            <button style={tabStyle(timeFilter === 'afternoon')} onClick={() => setTimeFilter('afternoon')}>Afternoon M-F</button>
+            <button style={tabStyle(timeFilter === 'weekend')} onClick={() => setTimeFilter('weekend')}>Weekend</button>
+          </div>
+          
           <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
-            {mockTimes.map((t, i) => {
-              const isSelected = times.includes(i);
+            {filteredTimes.map((t) => {
+              const isSelected = times.includes(t.index);
               return (
                 <button 
-                  key={i} 
+                  key={t.index} 
                   style={{
                     ...styles.timeBtn, 
                     ...(isSelected && styles.timeSelected)
                   }} 
                   onClick={() => {
-                    if (isSelected) setTimes(times.filter(x => x !== i));
-                    else if (times.length < pkg.lessons) setTimes([...times, i]);
+                    if (isSelected) setTimes(times.filter(x => x !== t.index));
+                    else if (times.length < pkg.lessons) setTimes([...times, t.index]);
                   }}
                 >
                   {t.date.slice(5)} {t.time}
