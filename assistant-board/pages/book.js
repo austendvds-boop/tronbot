@@ -479,40 +479,8 @@ export default function BookingApp() {
         
         <button 
           style={{...styles.button, ...styles.primary}} 
-          onClick={async () => {
-            const form = document.getElementById('bookingForm');
-            const data = new FormData(form);
-            const customerInfo = {
-              firstName: data.get('firstName'),
-              lastName: data.get('lastName'),
-              email: data.get('email'),
-              phone: data.get('phone')
-            };
-            setForm(customerInfo);
-            
-            // DEMO: Simulate payment + auto-booking
-            alert('DEMO: Opening Stripe checkout...\n\nIn production, after payment, lessons auto-book.');
-            
-            // Simulate webhook call (normally this happens after Stripe confirms payment)
-            try {
-              const response = await fetch('/api/webhook-demo', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  customer: customerInfo,
-                  package: pkg.name,
-                  location: location.name,
-                  times: selectedTimes,
-                  account: location.account
-                })
-              });
-              const result = await response.json();
-              
-              alert(`âœ… DEMO: Payment received!\n\nConfirmation: ${result.confirmationNumber}\n\n${result.bookings.length} lessons auto-booked:\n${result.bookings.map(b => `â€¢ ${b.datetime}`).join('\n')}\n\nConfirmation email sent to ${customerInfo.email}`);
-              
-            } catch (err) {
-              console.error('Demo error:', err);
-            }
+          onClick={() => {
+            alert(`DEMO FLOW:\n\n1. Customer pays $${pkg.price} on Stripe\n2. Webhook detects payment\n3. I auto-book ${selectedTimes.length} lessons in Acuity\n4. Confirmation sent to customer\n\nConfirmation #: DVDS-${Math.random().toString(36).substr(2, 8).toUpperCase()}`);
           }}
         >
           DEMO: Pay ${pkg.price} â†’
