@@ -473,21 +473,33 @@ export default function BookingApp() {
           <input placeholder="Phone" type="tel" style={styles.input} name="phone" autoComplete="tel" />
         </form>
         
+        <p style={{color: '#8b949e', fontSize: '14px', marginBottom: '16px'}}>
+          After payment, you'll receive a confirmation with your selected lesson times.
+        </p>
+        
         <button 
           style={{...styles.button, ...styles.primary}} 
           onClick={() => {
             const form = document.getElementById('bookingForm');
             const data = new FormData(form);
-            setForm({
+            const customerInfo = {
               firstName: data.get('firstName'),
               lastName: data.get('lastName'),
               email: data.get('email'),
-              phone: data.get('phone')
-            });
-            window.open(acuityUrl, '_blank');
+              phone: data.get('phone'),
+              package: pkg.name,
+              location: location.name,
+              times: selectedTimes.map(t => `${t.date} ${t.time}`).join(', ')
+            };
+            setForm(customerInfo);
+            
+            // For testing - use Stripe link
+            // In production, this would route to correct Stripe account based on location
+            const stripeUrl = 'https://buy.stripe.com/5kQ28s5sDe4o39x0em2ZO18';
+            window.open(stripeUrl, '_blank');
           }}
         >
-          Pay ${pkg.price} & Schedule â†’
+          Pay ${pkg.price} â†’
         </button>
       </div>
     );
