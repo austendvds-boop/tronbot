@@ -1,0 +1,27 @@
+{
+  "active": [],
+  "scheduled": [
+    {
+      "id": "cron-1",
+      "title": "Send 7 AM SMS to parents",
+      "schedule": "Daily at 7:00 AM",
+      "type": "cron",
+      "status": "scheduled"
+    },
+    {
+      "id": "cron-2",
+      "title": "Send 7 PM night-before reminder",
+      "schedule": "Daily at 7:00 PM",
+      "type": "cron",
+      "status": "scheduled"
+    },
+    {
+      "id": "cron-3",
+      "title": "Hourly heartbeat check",
+      "schedule": "Every hour 6 AM - 10 PM",
+      "type": "cron",
+      "status": "scheduled"
+    }
+  ],
+  "completed": []
+}
