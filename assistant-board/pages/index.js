@@ -113,9 +113,22 @@ export default function Dashboard() {
     localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
     setNewTask('');
     
-    // Show notification
-    setNotification(`Task "${newTask}" added! Message @NotZlaner69420 on Telegram to notify Claw.`);
-    setTimeout(() => setNotification(null), 5000);
+    // Auto-notify Claw
+    try {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'added',
+          task: newTaskObj,
+          timestamp: new Date().toISOString()
+        })
+      });
+      setNotification('Task added! Claw has been notified.');
+    } catch {
+      setNotification('Task added! (Notification pending)');
+    }
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const completeTask = async (id) => {
@@ -152,10 +165,23 @@ export default function Dashboard() {
     setTasks(updatedTasks);
     localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
     
-    // Show notification
+    // Auto-notify Claw
     if (taskToDelete) {
-      setNotification(`Task "${taskToDelete.title}" deleted. Message @NotZlaner69420 on Telegram if this affects Claw's work.`);
-      setTimeout(() => setNotification(null), 5000);
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'deleted',
+            task: taskToDelete,
+            timestamp: new Date().toISOString()
+          })
+        });
+        setNotification('Task deleted! Claw has been notified.');
+      } catch {
+        setNotification('Task deleted! (Notification pending)');
+      }
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
