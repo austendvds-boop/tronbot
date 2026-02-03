@@ -118,6 +118,8 @@ export default function Booking() {
 
   // Step 3: Select Times with tabs
   if (step === 3) {
+    const isComplete = times.length === pkg.lessons;
+    
     // Check if multiple lessons per week selected
     const hasMultiplePerWeek = () => {
       for (let i = 0; i < times.length; i++) {
@@ -142,7 +144,7 @@ export default function Booking() {
       if (selectedDates.has(t.date) && !times.includes(t.index)) return false;
 
       const date = new Date(t.date);
-      const day = date.getDay(); // 0=Sun, 6=Sat
+      const day = date.getDay();
       const hour = parseInt(t.time);
       const isPM = t.time.includes('pm');
       const isAfternoon = isPM && hour >= 1;
@@ -170,8 +172,8 @@ export default function Booking() {
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
         <div style={styles.header}>
-          <h1 style={styles.title}>Select {pkg.lessons} Times</h1>
-          <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week recommended</p>
+          <h1 style={styles.title}>{isComplete ? 'All Times Selected!' : `Select ${pkg.lessons} Times`}</h1>
+          {!isComplete && <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week recommended</p>}
         </div>
         <div style={styles.card}>
           {violation && (
@@ -184,35 +186,46 @@ export default function Booking() {
             </div>
           )}
           
-          {/* Filter Tabs */}
-          <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
-            <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All Times</button>
-            <button style={tabStyle(timeFilter === 'morning')} onClick={() => setTimeFilter('morning')}>Morning M-F</button>
-            <button style={tabStyle(timeFilter === 'afternoon')} onClick={() => setTimeFilter('afternoon')}>Afternoon M-F</button>
-            <button style={tabStyle(timeFilter === 'weekend')} onClick={() => setTimeFilter('weekend')}>Weekend</button>
-          </div>
+          {!isComplete && (
+            <>
+              {/* Filter Tabs */}
+              <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
+                <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All Times</button>
+                <button style={tabStyle(timeFilter === 'morning')} onClick={() => setTimeFilter('morning')}>Morning M-F</button>
+                <button style={tabStyle(timeFilter === 'afternoon')} onClick={() => setTimeFilter('afternoon')}>Afternoon M-F</button>
+                <button style={tabStyle(timeFilter === 'weekend')} onClick={() => setTimeFilter('weekend')}>Weekend</button>
+              </div>
+              
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
+                {filteredTimes.map((t) => {
+                  const isSelected = times.includes(t.index);
+                  return (
+                    <button 
+                      key={t.index} 
+                      style={{
+                        ...styles.timeBtn, 
+                        ...(isSelected && styles.timeSelected)
+                      }} 
+                      onClick={() => {
+                        if (isSelected) setTimes(times.filter(x => x !== t.index));
+                        else if (times.length < pkg.lessons) setTimes([...times, t.index]);
+                      }}
+                    >
+                      {t.date.slice(5)} {t.time}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
           
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
-            {filteredTimes.map((t) => {
-              const isSelected = times.includes(t.index);
-              return (
-                <button 
-                  key={t.index} 
-                  style={{
-                    ...styles.timeBtn, 
-                    ...(isSelected && styles.timeSelected)
-                  }} 
-                  onClick={() => {
-                    if (isSelected) setTimes(times.filter(x => x !== t.index));
-                    else if (times.length < pkg.lessons) setTimes([...times, t.index]);
-                  }}
-                >
-                  {t.date.slice(5)} {t.time}
-                </button>
-              );
-            })}
-          </div>
-          {times.length === pkg.lessons && <button style={{...styles.button, marginTop: '16px'}} onClick={() => setStep(4)}>Continue â†’</button>}
+          {isComplete && (
+            <div style={{textAlign: 'center', padding: '20px 0'}}>
+              <div style={{fontSize: '48px', marginBottom: '16px'}}>âœ…</div>
+              <p style={{fontSize: '18px', marginBottom: '20px'}}>{times.length} lessons selected</p>
+              <button style={styles.button} onClick={() => setStep(4)}>Continue to Payment â†’</button>
+            </div>
+          )}
         </div>
       </div>
     );
