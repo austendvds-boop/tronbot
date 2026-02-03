@@ -120,10 +120,18 @@ export default function Dashboard() {
     <div style={styles.container}>
       <Head>
         <title>Claw Assistant | DVDS Task Board</title>
+        <style>{`
+          body { 
+            margin: 0; 
+            background-color: #0d1117; 
+            color: #c9d1d9;
+          }
+          html { background-color: #0d1117; }
+        `}</style>
       </Head>
       
       <header style={styles.header}>
-        <h1>ðŸ¦ž Claw Task Board</h1>
+        <h1>Claw Task Board</h1>
         <p>Deer Valley Driving School Assistant Dashboard</p>
       </header>
 
@@ -137,7 +145,7 @@ export default function Dashboard() {
             placeholder="What should I work on?"
             style={styles.input}
           />
-          <button type="submit" style={styles.submitBtn}>âž• Add Task</button>
+          <button type="submit" style={styles.submitBtn}>Add Task</button>
         </form>
       </div>
 
@@ -145,7 +153,7 @@ export default function Dashboard() {
       <div style={styles.board}>
         {/* Active Column */}
         <div style={styles.column}>
-          <div style={styles.columnTitle}>â–¶ï¸ ACTIVE ({tasks.active.length})</div>
+          <div style={styles.columnTitle}>ACTIVE ({tasks.active.length})</div>
           {tasks.active.length === 0 ? (
             <div style={styles.empty}>No active tasks</div>
           ) : (
@@ -158,7 +166,7 @@ export default function Dashboard() {
                     onClick={() => completeTask(task.id)}
                     style={{...styles.button, ...styles.completeBtn}}
                   >
-                    âœ“ Done
+                    Done
                   </button>
                 </li>
               ))}
@@ -168,7 +176,7 @@ export default function Dashboard() {
 
         {/* Scheduled Column */}
         <div style={styles.column}>
-          <div style={styles.columnTitle}>ðŸ“… SCHEDULED ({tasks.scheduled.length})</div>
+          <div style={styles.columnTitle}>SCHEDULED ({tasks.scheduled.length})</div>
           {tasks.scheduled.length === 0 ? (
             <div style={styles.empty}>No scheduled tasks</div>
           ) : (
@@ -176,12 +184,12 @@ export default function Dashboard() {
               {tasks.scheduled.map(task => (
                 <li key={task.id} style={{...styles.taskCard, ...styles.scheduledCard}}>
                   <div style={styles.cardTitle}>{task.title}</div>
-                  {task.schedule && <div style={styles.cardMeta}>â° {task.schedule}</div>}
+                  {task.schedule && <div style={styles.cardMeta}>{task.schedule}</div>}
                   <button 
                     onClick={() => startTask(task.id)}
                     style={{...styles.button, ...styles.startBtn}}
                   >
-                    â–¶ Start
+                    Start
                   </button>
                 </li>
               ))}
@@ -191,7 +199,7 @@ export default function Dashboard() {
 
         {/* Completed Column */}
         <div style={styles.column}>
-          <div style={styles.columnTitle}>âœ… DONE ({tasks.completed.length})</div>
+          <div style={styles.columnTitle}>DONE ({tasks.completed.length})</div>
           {tasks.completed.length === 0 ? (
             <div style={styles.empty}>Nothing completed today</div>
           ) : (
@@ -199,7 +207,7 @@ export default function Dashboard() {
               {tasks.completed.map(task => (
                 <li key={task.id} style={{...styles.taskCard, ...styles.completedCard}}>
                   <div style={styles.cardTitle}>{task.title}</div>
-                  <div style={styles.cardMeta}>âœ“ {new Date(task.completedAt).toLocaleTimeString()}</div>
+                  <div style={styles.cardMeta}>{new Date(task.completedAt).toLocaleTimeString()}</div>
                 </li>
               ))}
             </ul>
