@@ -108,13 +108,9 @@ export default function BookingV2() {
   const renderStep1 = () => (
     <div style={styles.card}>
       <h2>Where are you located?</h2>
-      <p style={{color: '#8b949e', marginBottom: '15px'}}>Enter your address to see pricing and availability.</p>
-      <input placeholder="123 Main St, Gilbert, AZ" style={styles.input} value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
-      <input placeholder="First Name" style={styles.input} value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
-      <input placeholder="Last Name" style={styles.input} value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
-      <input placeholder="Email" type="email" style={styles.input} value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-      <input placeholder="Phone" type="tel" style={styles.input} value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-      <button style={{...styles.button, ...styles.primary}} onClick={detectLocation}>Continue â†’</button>
+      <p style={{color: '#8b949e', marginBottom: '15px'}}>Enter your city to see pricing and available times.</p>
+      <input placeholder="e.g. Gilbert, AZ" style={styles.input} value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+      <button style={{...styles.button, ...styles.primary}} onClick={detectLocation}>See Pricing & Times â†’</button>
     </div>
   );
 
@@ -304,6 +300,12 @@ export default function BookingV2() {
             })}
           </div>
         </div>
+        
+        <h3 style={{marginBottom: '15px'}}>Your Info</h3>
+        <input placeholder="First Name" style={styles.input} value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
+        <input placeholder="Last Name" style={styles.input} value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
+        <input placeholder="Email" type="email" style={styles.input} value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+        <input placeholder="Phone" type="tel" style={styles.input} value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
         
         {selectedPkg === 'contact' ? (
           <button style={{...styles.button, ...styles.primary}} onClick={() => alert('Request submitted!')}>Submit</button>
