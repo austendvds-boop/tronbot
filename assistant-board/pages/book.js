@@ -40,16 +40,30 @@ export default function Booking() {
     setStep(2);
   };
 
-  const mockTimes = [
-    { date: '2026-02-04', time: '8:00am' },
-    { date: '2026-02-04', time: '10:30am' },
-    { date: '2026-02-04', time: '1:00pm' },
-    { date: '2026-02-05', time: '9:00am' },
-    { date: '2026-02-05', time: '11:30am' },
-    { date: '2026-02-05', time: '2:00pm' },
-    { date: '2026-02-06', time: '8:30am' },
-    { date: '2026-02-06', time: '1:30pm' }
-  ];
+  // Generate 8 weeks of mock times for demo
+  const mockTimes = [];
+  const baseDate = new Date('2026-02-04');
+  
+  for (let week = 0; week < 8; week++) {
+    const weekDate = new Date(baseDate);
+    weekDate.setDate(weekDate.getDate() + (week * 7));
+    
+    const dateStr = weekDate.toISOString().split('T')[0];
+    
+    // Add times for this week (Mon-Sat, no Sunday)
+    mockTimes.push({ date: dateStr, time: '8:00am' });
+    mockTimes.push({ date: dateStr, time: '10:30am' });
+    mockTimes.push({ date: dateStr, time: '1:00pm' });
+    mockTimes.push({ date: dateStr, time: '3:30pm' });
+    
+    // Add next day (Tuesday)
+    const tuesday = new Date(weekDate);
+    tuesday.setDate(tuesday.getDate() + 1);
+    const tueStr = tuesday.toISOString().split('T')[0];
+    mockTimes.push({ date: tueStr, time: '9:00am' });
+    mockTimes.push({ date: tueStr, time: '11:30am' });
+    mockTimes.push({ date: tueStr, time: '2:00pm' });
+  }
 
   const styles = {
     container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
