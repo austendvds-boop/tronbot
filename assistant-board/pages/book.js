@@ -133,8 +133,14 @@ export default function Booking() {
 
     const violation = hasMultiplePerWeek();
 
-    // Filter times based on tab
+    // Get dates that already have a lesson selected
+    const selectedDates = new Set(times.map(i => mockTimes[i].date));
+
+    // Filter times based on tab AND hide other times on same day
     const filteredTimes = mockTimes.map((t, i) => ({...t, index: i})).filter(t => {
+      // Hide if another time on same day is already selected (unless this is the selected one)
+      if (selectedDates.has(t.date) && !times.includes(t.index)) return false;
+
       const date = new Date(t.date);
       const day = date.getDay(); // 0=Sun, 6=Sat
       const hour = parseInt(t.time);
