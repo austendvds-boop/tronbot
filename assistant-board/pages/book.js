@@ -19,6 +19,33 @@ const locations = {
   peoria: { name: 'Peoria', account: 'dad', instructors: 'Ernie/Freddy' }
 };
 
+// Generate mock times once
+const generateMockTimes = () => {
+  const times = [];
+  const baseDate = new Date('2026-02-04');
+  
+  for (let week = 0; week < 8; week++) {
+    const weekDate = new Date(baseDate);
+    weekDate.setDate(weekDate.getDate() + (week * 7));
+    const dateStr = weekDate.toISOString().split('T')[0];
+    
+    times.push({ date: dateStr, time: '8:00am' });
+    times.push({ date: dateStr, time: '10:30am' });
+    times.push({ date: dateStr, time: '1:00pm' });
+    times.push({ date: dateStr, time: '3:30pm' });
+    
+    const tuesday = new Date(weekDate);
+    tuesday.setDate(tuesday.getDate() + 1);
+    const tueStr = tuesday.toISOString().split('T')[0];
+    times.push({ date: tueStr, time: '9:00am' });
+    times.push({ date: tueStr, time: '11:30am' });
+    times.push({ date: tueStr, time: '2:00pm' });
+  }
+  return times;
+};
+
+const mockTimes = generateMockTimes();
+
 export default function Booking() {
   const [step, setStep] = useState(1);
   const [city, setCity] = useState('');
@@ -41,31 +68,6 @@ export default function Booking() {
     setStep(2);
   };
 
-  // Generate 8 weeks of mock times for demo
-  const mockTimes = [];
-  const baseDate = new Date('2026-02-04');
-  
-  for (let week = 0; week < 8; week++) {
-    const weekDate = new Date(baseDate);
-    weekDate.setDate(weekDate.getDate() + (week * 7));
-    
-    const dateStr = weekDate.toISOString().split('T')[0];
-    
-    // Add times for this week (Mon-Sat, no Sunday)
-    mockTimes.push({ date: dateStr, time: '8:00am' });
-    mockTimes.push({ date: dateStr, time: '10:30am' });
-    mockTimes.push({ date: dateStr, time: '1:00pm' });
-    mockTimes.push({ date: dateStr, time: '3:30pm' });
-    
-    // Add next day (Tuesday)
-    const tuesday = new Date(weekDate);
-    tuesday.setDate(tuesday.getDate() + 1);
-    const tueStr = tuesday.toISOString().split('T')[0];
-    mockTimes.push({ date: tueStr, time: '9:00am' });
-    mockTimes.push({ date: tueStr, time: '11:30am' });
-    mockTimes.push({ date: tueStr, time: '2:00pm' });
-  }
-
   const styles = {
     container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
     header: { textAlign: 'center', marginBottom: '20px' },
@@ -80,6 +82,7 @@ export default function Booking() {
     timeSelected: { borderColor: '#238636', background: '#238636', color: 'white' }
   };
 
+  // Step 1: City
   if (step === 1) {
     return (
       <div style={styles.container}>
@@ -94,6 +97,7 @@ export default function Booking() {
     );
   }
 
+  // Step 2: Package
   if (step === 2) {
     return (
       <div style={styles.container}>
@@ -116,33 +120,35 @@ export default function Booking() {
     );
   }
 
-  // Step 3: Select Times with tabs
-  if (step === 3) {
+  // Step 3: Times
+  if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
     
-    // Check if multiple lessons per week selected
-    const hasMultiplePerWeek = () => {
-      for (let i = 0; i < times.length; i++) {
-        for (let j = i + 1; j < times.length; j++) {
-          const date1 = new Date(mockTimes[times[i]].date);
-          const date2 = new Date(mockTimes[times[j]].date);
-          const diffDays = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
-          if (diffDays < 7) return true;
+    // Check for violations
+    let violation = false;
+    for (let i = 0; i < times.length; i++) {
+      for (let j = i + 1; j < times.length; j++) {
+        const t1 = mockTimes[times[i]];
+        const t2 = mockTimes[times[j]];
+        if (t1 && t2) {
+          const d1 = new Date(t1.date);
+          const d2 = new Date(t2.date);
+          const diff = Math.abs((d1 - d2) / (1000 * 60 * 60 * 24));
+          if (diff < 7) violation = true;
         }
       }
-      return false;
-    };
+    }
 
-    const violation = hasMultiplePerWeek();
+    // Get selected dates
+    const selectedDates = new Set();
+    times.forEach(idx => {
+      const t = mockTimes[idx];
+      if (t) selectedDates.add(t.date);
+    });
 
-    // Get dates that already have a lesson selected
-    const selectedDates = new Set(times.map(i => mockTimes[i].date));
-
-    // Filter times based on tab AND hide other times on same day
+    // Filter times
     const filteredTimes = mockTimes.map((t, i) => ({...t, index: i})).filter(t => {
-      // Hide if another time on same day is already selected (unless this is the selected one)
       if (selectedDates.has(t.date) && !times.includes(t.index)) return false;
-
       const date = new Date(t.date);
       const day = date.getDay();
       const hour = parseInt(t.time);
@@ -157,15 +163,9 @@ export default function Booking() {
     });
 
     const tabStyle = (active) => ({
-      flex: 1,
-      padding: '12px 8px',
-      border: 'none',
-      borderRadius: '8px',
-      background: active ? '#238636' : '#30363d',
-      color: 'white',
-      fontWeight: 'bold',
-      fontSize: '13px',
-      cursor: 'pointer'
+      flex: 1, padding: '12px 4px', border: 'none', borderRadius: '8px',
+      background: active ? '#238636' : '#30363d', color: 'white',
+      fontWeight: 'bold', fontSize: '12px', cursor: 'pointer'
     });
 
     return (
@@ -173,24 +173,20 @@ export default function Booking() {
         <Head><title>Book | DVDS</title></Head>
         <div style={styles.header}>
           <h1 style={styles.title}>{isComplete ? 'All Times Selected!' : `Select ${pkg.lessons} Times`}</h1>
-          {!isComplete && <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week recommended</p>}
+          {!isComplete && <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week</p>}
         </div>
         <div style={styles.card}>
           {violation && (
             <div style={{background: '#da3633', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>
               <strong>âš ï¸ Multiple Lessons Per Week</strong>
-              <p style={{margin: '4px 0 0 0', fontSize: '14px'}}>
-                You've selected lessons less than 7 days apart. 
-                An additional $50 surcharge will apply.
-              </p>
+              <p style={{margin: '4px 0 0 0', fontSize: '14px'}}>+$50 surcharge applies</p>
             </div>
           )}
           
-          {!isComplete && (
+          {!isComplete ? (
             <>
-              {/* Filter Tabs */}
               <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
-                <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All Times</button>
+                <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All</button>
                 <button style={tabStyle(timeFilter === 'morning')} onClick={() => setTimeFilter('morning')}>Morning M-F</button>
                 <button style={tabStyle(timeFilter === 'afternoon')} onClick={() => setTimeFilter('afternoon')}>Afternoon M-F</button>
                 <button style={tabStyle(timeFilter === 'weekend')} onClick={() => setTimeFilter('weekend')}>Weekend</button>
@@ -202,10 +198,7 @@ export default function Booking() {
                   return (
                     <button 
                       key={t.index} 
-                      style={{
-                        ...styles.timeBtn, 
-                        ...(isSelected && styles.timeSelected)
-                      }} 
+                      style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}} 
                       onClick={() => {
                         if (isSelected) setTimes(times.filter(x => x !== t.index));
                         else if (times.length < pkg.lessons) setTimes([...times, t.index]);
@@ -217,13 +210,11 @@ export default function Booking() {
                 })}
               </div>
             </>
-          )}
-          
-          {isComplete && (
+          ) : (
             <div style={{textAlign: 'center', padding: '20px 0'}}>
               <div style={{fontSize: '48px', marginBottom: '16px'}}>âœ…</div>
               <p style={{fontSize: '18px', marginBottom: '20px'}}>{times.length} lessons selected</p>
-              <button style={styles.button} onClick={() => setStep(4)}>Continue to Payment â†’</button>
+              <button style={styles.button} onClick={() => setStep(4)}>Continue â†’</button>
             </div>
           )}
         </div>
@@ -231,69 +222,51 @@ export default function Booking() {
     );
   }
 
-  // Step 4: Student Info
-  // Step 4: Pay First
-  const [paid, setPaid] = useState(false);
-  
-  if (step === 4) {
-    // Check for multiple per week violation
-    const hasViolation = () => {
-      for (let i = 0; i < times.length; i++) {
-        for (let j = i + 1; j < times.length; j++) {
-          const date1 = new Date(mockTimes[times[i]].date);
-          const date2 = new Date(mockTimes[times[j]].date);
-          const diffDays = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
-          if (diffDays < 7) return true;
+  // Step 4: Pay
+  if (step === 4 && pkg) {
+    let violation = false;
+    for (let i = 0; i < times.length; i++) {
+      for (let j = i + 1; j < times.length; j++) {
+        const t1 = mockTimes[times[i]];
+        const t2 = mockTimes[times[j]];
+        if (t1 && t2) {
+          const diff = Math.abs((new Date(t1.date) - new Date(t2.date)) / (1000 * 60 * 60 * 24));
+          if (diff < 7) violation = true;
         }
       }
-      return false;
-    };
-
-    const violation = hasViolation();
+    }
     const surcharge = violation ? 50 : 0;
-    const totalPrice = pkg.price + surcharge;
+    const total = pkg.price + surcharge;
 
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
         <div style={styles.header}><h1 style={styles.title}>Complete Payment</h1></div>
         <div style={styles.card}>
-          <p><strong>{location.name}</strong> â€¢ {pkg.name}</p>
-          <p style={styles.price}>${totalPrice}</p>
-          {violation && (
-            <div style={{background: '#da3633', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px'}}>
-              <strong>âš ï¸ Multiple Lessons Per Week Surcharge: +$50</strong>
-              <p style={{margin: '4px 0 0 0'}}>Base: ${pkg.price} + Surcharge: $50 = ${totalPrice}</p>
-            </div>
-          )}
-          <p>{times.length} lessons selected</p>
-          <button style={styles.button} onClick={() => {alert(`DEMO: Paid $${totalPrice}!`); setPaid(true); setStep(5);}}>
-            Pay ${totalPrice} â†’
+          <p><strong>{location?.name}</strong> â€¢ {pkg.name}</p>
+          <p style={styles.price}>${total}</p>
+          {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
+          <button style={styles.button} onClick={() => {alert(`Paid $${total}!`); setStep(5);}}>
+            Pay ${total} â†’
           </button>
         </div>
       </div>
     );
   }
 
-  // Step 5: Student Info After Payment
+  // Step 5: Info
   return (
     <div style={styles.container}>
       <Head><title>Book | DVDS</title></Head>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Student Info</h1>
-        <p style={{color: '#238636'}}>âœ… Payment Received</p>
-      </div>
+      <div style={styles.header}><h1 style={styles.title}>Student Info</h1><p style={{color: '#238636'}}>âœ… Payment Received</p></div>
       <div style={styles.card}>
-        <p style={{marginBottom: '16px', color: '#8b949e'}}>
-          Complete your booking details below
-        </p>
         <input placeholder="First Name" style={styles.input} />
         <input placeholder="Last Name" style={styles.input} />
         <input placeholder="Email" type="email" style={styles.input} />
         <input placeholder="Phone" type="tel" style={styles.input} />
         <input placeholder="Address" style={styles.input} />
-        <textarea placeholder="Notes (optional)" style={{...styles.input, minHeight: '80px', resize: 'vertical'}} />
-        <button style={styles.button} onClick={() => alert(`Booking confirmed! Confirmation: DVDS-${Math.random().toString(36).substr(2,8).toUpperCase()}`)}>
+        <textarea placeholder="Notes (optional)" style={{...styles.input, minHeight: '80px'}} />
+        <button style={styles.button} onClick={() => alert('Booking confirmed!')}>
           Complete Booking â†’
         </button>
       </div>
