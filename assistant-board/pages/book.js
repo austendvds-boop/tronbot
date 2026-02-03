@@ -1,32 +1,40 @@
 import { useState } from 'react';
 import Head from 'next/head';
 
-// Real packages from Acuity
+// Real package prices
+const packagePrices = {
+  ultimate: 1299,    // 8 lessons
+  license: 680,      // 4 lessons
+  intro: 350,        // 2 lessons
+  express: 200       // 1 lesson
+};
+
+// Location mappings
 const locationPackages = {
-  ahwatukee: { account: 'austen', name: 'Ahwatukee', lessonPrice: 170, instructor: 'Aaron', aptTypeId: '50528435' },
-  anthem: { account: 'austen', name: 'Anthem', lessonPrice: 170, instructor: 'Austen', dual: true, aptTypeId: '52197630' },
-  apacheJunction: { account: 'austen', name: 'Apache Junction', lessonPrice: 170, instructor: 'Ryan', aptTypeId: '50528555' },
-  caveCreek: { account: 'austen', name: 'Cave Creek', lessonPrice: 170, instructor: 'Austen', dual: true, aptTypeId: '63747690' },
-  chandler: { account: 'austen', name: 'Chandler', lessonPrice: 170, instructor: 'Aaron/Ryan', aptTypeId: '50528663' },
-  downtownPhoenix: { account: 'austen', name: 'Downtown Phoenix', lessonPrice: 170, instructor: 'Austen', aptTypeId: '50528736' },
-  flagstaff: { account: 'austen', name: 'Flagstaff/Sedona/Cottonwood', lessonPrice: 0, instructor: 'Austen', note: 'Contact for pricing' },
-  gilbert: { account: 'austen', name: 'Gilbert', lessonPrice: 170, instructor: 'Aaron/Ryan', aptTypeId: '44842749' },
-  mesa: { account: 'austen', name: 'Mesa', lessonPrice: 170, instructor: 'Aaron/Ryan', aptTypeId: '44842781' },
-  northPhoenix: { account: 'austen', name: 'North Phoenix', lessonPrice: 170, instructor: 'Austen', dual: true, aptTypeId: '83323017' },
-  queenCreek: { account: 'austen', name: 'Queen Creek', lessonPrice: 170, instructor: 'Ryan', aptTypeId: '50528913' },
-  sanTanValley: { account: 'austen', name: 'San Tan Valley', lessonPrice: 170, instructor: 'Ryan', aptTypeId: '50528924' },
-  scottsdale: { account: 'austen', name: 'Scottsdale', lessonPrice: 170, instructor: 'Austen', dual: true, aptTypeId: '53640646' },
-  tempe: { account: 'austen', name: 'Tempe', lessonPrice: 170, instructor: 'Austen', aptTypeId: '50528939' },
-  westValley: { account: 'austen', name: 'West Valley', lessonPrice: 340, instructor: 'Austen', is5Hour: true, aptTypeId: '85088423' },
-  avondale: { account: 'dad', name: 'Avondale', lessonPrice: 187.25, instructor: 'Ernie/Michelle', aptTypeId: '50529572' },
-  buckeye: { account: 'dad', name: 'Buckeye', lessonPrice: 187.25, instructor: 'Ernie/Allan', aptTypeId: '50529642' },
-  elMirage: { account: 'dad', name: 'El Mirage', lessonPrice: 170, instructor: 'Bob/Brandon', aptTypeId: '50529754' },
-  glendale: { account: 'dad', name: 'Glendale', lessonPrice: 170, instructor: 'Ernie/Michelle', aptTypeId: '50529778' },
-  goodyear: { account: 'dad', name: 'Goodyear', lessonPrice: 187.25, instructor: 'Allan/Bob', aptTypeId: '50529794' },
-  peoria: { account: 'dad', name: 'Peoria', lessonPrice: 170, instructor: 'Ernie/Freddy', aptTypeId: '50529862' },
-  sunCity: { account: 'dad', name: 'Sun City', lessonPrice: 170, instructor: 'Bob/Brandon', aptTypeId: '50529915' },
-  surprise: { account: 'dad', name: 'Surprise', lessonPrice: 170, instructor: 'Allan/Freddy', aptTypeId: '50529929' },
-  tolleson: { account: 'dad', name: 'Tolleson', lessonPrice: 187.25, instructor: 'Brandon/Freddy', aptTypeId: '50529937' }
+  ahwatukee: { account: 'austen', name: 'Ahwatukee', instructor: 'Aaron', aptTypeId: '50528435', calendarId: '11494751' },
+  anthem: { account: 'austen', name: 'Anthem', instructor: 'Austen', dual: true, aptTypeId: '52197630', calendarId: '6137726' },
+  apacheJunction: { account: 'austen', name: 'Apache Junction', instructor: 'Ryan', aptTypeId: '50528555', calendarId: '5812644' },
+  caveCreek: { account: 'austen', name: 'Cave Creek', instructor: 'Austen', dual: true, aptTypeId: '63747690', calendarId: '6137726' },
+  chandler: { account: 'austen', name: 'Chandler', instructor: 'Aaron/Ryan', aptTypeId: '50528663', calendarId: '11494751' },
+  downtownPhoenix: { account: 'austen', name: 'Downtown Phoenix', instructor: 'Austen', aptTypeId: '50528736', calendarId: '6137726' },
+  flagstaff: { account: 'austen', name: 'Flagstaff/Sedona/Cottonwood', instructor: 'Austen', note: 'Contact for pricing' },
+  gilbert: { account: 'austen', name: 'Gilbert', instructor: 'Aaron/Ryan', aptTypeId: '44842749', calendarId: '11494751' },
+  mesa: { account: 'austen', name: 'Mesa', instructor: 'Aaron/Ryan', aptTypeId: '44842781', calendarId: '5812644' },
+  northPhoenix: { account: 'austen', name: 'North Phoenix', instructor: 'Austen', dual: true, aptTypeId: '83323017', calendarId: '6137726' },
+  queenCreek: { account: 'austen', name: 'Queen Creek', instructor: 'Ryan', aptTypeId: '50528913', calendarId: '5812644' },
+  sanTanValley: { account: 'austen', name: 'San Tan Valley', instructor: 'Ryan', aptTypeId: '50528924', calendarId: '5812644' },
+  scottsdale: { account: 'austen', name: 'Scottsdale', instructor: 'Austen', dual: true, aptTypeId: '53640646', calendarId: '6137726' },
+  tempe: { account: 'austen', name: 'Tempe', instructor: 'Austen', aptTypeId: '50528939', calendarId: '6137726' },
+  westValley: { account: 'austen', name: 'West Valley', instructor: 'Austen', is5Hour: true, aptTypeId: '85088423', calendarId: '6137726' },
+  avondale: { account: 'dad', name: 'Avondale', instructor: 'Ernie/Michelle', aptTypeId: '50529572', calendarId: '' },
+  buckeye: { account: 'dad', name: 'Buckeye', instructor: 'Ernie/Allan', aptTypeId: '50529642', calendarId: '' },
+  elMirage: { account: 'dad', name: 'El Mirage', instructor: 'Bob/Brandon', aptTypeId: '50529754', calendarId: '' },
+  glendale: { account: 'dad', name: 'Glendale', instructor: 'Ernie/Michelle', aptTypeId: '50529778', calendarId: '' },
+  goodyear: { account: 'dad', name: 'Goodyear', instructor: 'Allan/Bob', aptTypeId: '50529794', calendarId: '' },
+  peoria: { account: 'dad', name: 'Peoria', instructor: 'Ernie/Freddy', aptTypeId: '50529862', calendarId: '' },
+  sunCity: { account: 'dad', name: 'Sun City', instructor: 'Bob/Brandon', aptTypeId: '50529915', calendarId: '' },
+  surprise: { account: 'dad', name: 'Surprise', instructor: 'Allan/Freddy', aptTypeId: '50529929', calendarId: '' },
+  tolleson: { account: 'dad', name: 'Tolleson', instructor: 'Brandon/Freddy', aptTypeId: '50529937', calendarId: '' }
 };
 
 const cityMapping = {
@@ -135,10 +143,8 @@ export default function BookingV2() {
           </div>
           <div style={styles.locationCard}>
             <div style={styles.locationName}>{detectedLoc.name}</div>
-            {detectedLoc.note ? (
+            {detectedLoc.note && (
               <div style={{color: '#d29922'}}>{detectedLoc.note}</div>
-            ) : (
-              <div style={styles.price}>${detectedLoc.lessonPrice}<span style={{fontSize: '16px', color: '#8b949e'}}>/lesson</span></div>
             )}
             <div style={styles.instructor}>Instructor: {detectedLoc.instructor}</div>
             {detectedLoc.dual && <div style={{color: '#d29922', fontSize: '12px', marginTop: '5px'}}>Both teams serve this area</div>}
@@ -150,7 +156,6 @@ export default function BookingV2() {
   );
 
   const renderStep3Packages = () => {
-    const price = detectedLoc.lessonPrice;
     return (
       <div style={styles.card}>
         <a style={styles.back} onClick={() => setStep(2)}>â† Back</a>
@@ -164,29 +169,29 @@ export default function BookingV2() {
         ) : detectedLoc.is5Hour ? (
           <div style={{...styles.package, ...(selectedPkg === 'westvalley' && styles.pkgSelected)}} onClick={() => setSelectedPkg('westvalley')}>
             <div style={{fontWeight: 'bold', fontSize: '18px'}}>West Valley 5-Hour</div>
-            <div style={styles.price}>${price}</div>
+            <div style={styles.price}>$340</div>
             <div style={{color: '#8b949e'}}>One 5-hour lesson</div>
           </div>
         ) : (
           <>
             <div style={{...styles.package, ...(selectedPkg === 'ultimate' && styles.pkgSelected)}} onClick={() => setSelectedPkg('ultimate')}>
               <div style={{fontWeight: 'bold', fontSize: '18px'}}>Ultimate Package</div>
-              <div style={styles.price}>${(price * 8).toFixed(2)}</div>
+              <div style={styles.price}>${packagePrices.ultimate}</div>
               <div style={{color: '#8b949e'}}>8 lessons (20 hrs) - Best value</div>
             </div>
             <div style={{...styles.package, ...(selectedPkg === 'license' && styles.pkgSelected)}} onClick={() => setSelectedPkg('license')}>
               <div style={{fontWeight: 'bold', fontSize: '18px'}}>License Ready â­</div>
-              <div style={styles.price}>${(price * 4).toFixed(2)}</div>
+              <div style={styles.price}>${packagePrices.license}</div>
               <div style={{color: '#8b949e'}}>4 lessons (10 hrs) - Most popular</div>
             </div>
             <div style={{...styles.package, ...(selectedPkg === 'intro' && styles.pkgSelected)}} onClick={() => setSelectedPkg('intro')}>
               <div style={{fontWeight: 'bold', fontSize: '18px'}}>Intro to Driving</div>
-              <div style={styles.price}>${(price * 2).toFixed(2)}</div>
+              <div style={styles.price}>${packagePrices.intro}</div>
               <div style={{color: '#8b949e'}}>2 lessons (5 hrs)</div>
             </div>
             <div style={{...styles.package, ...(selectedPkg === 'express' && styles.pkgSelected)}} onClick={() => setSelectedPkg('express')}>
               <div style={{fontWeight: 'bold', fontSize: '18px'}}>Express Lesson</div>
-              <div style={styles.price}>${price.toFixed(2)}</div>
+              <div style={styles.price}>${packagePrices.express}</div>
               <div style={{color: '#8b949e'}}>1 lesson (2.5 hrs)</div>
             </div>
           </>
@@ -271,14 +276,13 @@ export default function BookingV2() {
   };
 
   const renderStep5Payment = () => {
-    const price = detectedLoc.lessonPrice;
     let pkgName = '', pkgPrice = 0;
     switch(selectedPkg) {
-      case 'ultimate': pkgName = 'Ultimate (8 lessons)'; pkgPrice = price * 8; break;
-      case 'license': pkgName = 'License Ready (4 lessons)'; pkgPrice = price * 4; break;
-      case 'intro': pkgName = 'Intro (2 lessons)'; pkgPrice = price * 2; break;
-      case 'express': pkgName = 'Express (1 lesson)'; pkgPrice = price; break;
-      case 'westvalley': pkgName = 'West Valley 5-Hour'; pkgPrice = price; break;
+      case 'ultimate': pkgName = 'Ultimate (8 lessons)'; pkgPrice = packagePrices.ultimate; break;
+      case 'license': pkgName = 'License Ready (4 lessons)'; pkgPrice = packagePrices.license; break;
+      case 'intro': pkgName = 'Intro (2 lessons)'; pkgPrice = packagePrices.intro; break;
+      case 'express': pkgName = 'Express (1 lesson)'; pkgPrice = packagePrices.express; break;
+      case 'westvalley': pkgName = 'West Valley 5-Hour'; pkgPrice = 340; break;
       case 'contact': pkgName = 'Contact for Pricing'; pkgPrice = 0; break;
     }
     
