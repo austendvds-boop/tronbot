@@ -264,22 +264,53 @@ export default function BookingApp() {
         )}
       </div>
       
-      <button style={{...styles.button, ...styles.primary}} onClick={fetchAvailability} disabled={loading}>
-        {loading ? 'Loading...' : 'See Available Times â†’'}
+      <button style={{...styles.button, ...styles.primary}} onClick={() => setStep(3)}>
+        Choose Package â†’
       </button>
     </div>
   );
 
-  // Step 3: Calendar View
-  const Step3 = () => {
+  // Step 3: Select Package
+  const Step3 = () => (
+    <div style={styles.card}>
+      <a style={styles.back} onClick={() => setStep(2)}>â† Back</a>
+      <h2 style={{marginBottom: '8px'}}>Choose Your Package</h2>
+      
+      {Object.entries(packages).map(([key, pkg]) => (
+        <div 
+          key={key}
+          style={{...styles.package, ...(selectedPkg === key && styles.packageSelected)}}
+          onClick={() => setSelectedPkg(key)}
+        >
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
+            <span style={{fontWeight: 'bold', fontSize: '18px'}}>{pkg.name}</span>
+            <span style={styles.price}>${pkg.price}</span>
+          </div>
+          <div style={{color: '#8b949e', fontSize: '14px'}}>
+            {pkg.lessons} lesson{pkg.lessons > 1 ? 's' : ''} â€¢ {pkg.hours} hours
+          </div>
+        </div>
+      ))}
+      
+      {selectedPkg && (
+        <button style={{...styles.button, ...styles.primary, marginTop: '8px'}} onClick={() => {setStep(4); fetchAvailability();}}>
+          Select {packages[selectedPkg].lessons} Times â†’
+        </button>
+      )}
+    </div>
+  );
+
+  // Step 4: Calendar View
+  const Step4 = () => {
+    const required = packages[selectedPkg]?.lessons || 1;
     const dates = [...new Set(availability.map(a => a.date))].slice(0, 14);
     
     return (
       <div style={styles.card}>
-        <a style={styles.back} onClick={() => setStep(2)}>â† Back</a>
-        <h2 style={{marginBottom: '8px'}}>Available Times</h2>
+        <a style={styles.back} onClick={() => setStep(3)}>â† Back</a>
+        <h2 style={{marginBottom: '8px'}}>Select {required} Times</h2>
         <p style={{color: '#8b949e', marginBottom: '16px'}}>
-          Select {required} time slot{required > 1 ? 's' : ''}
+          {packages[selectedPkg]?.name} â€¢ Pick {required} time slot{required > 1 ? 's' : ''}
         </p>
         
         <div style={{maxHeight: '400px', overflowY: 'auto'}}>
@@ -346,9 +377,9 @@ export default function BookingApp() {
           </div>
         )}
         
-        {selectedTimes.length > 0 && (
-          <button style={{...styles.button, ...styles.primary, marginTop: '16px'}} onClick={() => setStep(4)}>
-            Continue to Package â†’
+        {selectedTimes.length === required && (
+          <button style={{...styles.button, ...styles.primary, marginTop: '16px'}} onClick={() => setStep(5)}>
+            Continue to Payment â†’
           </button>
         )}
       </div>
