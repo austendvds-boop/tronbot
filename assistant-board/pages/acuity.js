@@ -13,7 +13,6 @@ export default function AcuityDashboard() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [notification, setNotification] = useState(null);
-  const [studentHistory, setStudentHistory] = useState(null);
 
   // Student history - starts with mock data, updates from API
   const [studentHistory, setStudentHistory] = useState({
