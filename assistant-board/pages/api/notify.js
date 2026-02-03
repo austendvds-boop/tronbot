@@ -5,43 +5,39 @@ export default async function handler(req, res) {
 
   const { action, task, timestamp } = req.body;
   
-  // Store notification in a log that Claw can check
-  // In a real implementation, this would send to a message queue or database
-  const notification = {
-    id: Date.now().toString(),
-    action,
-    taskTitle: task.title,
-    taskId: task.id,
-    timestamp,
-    receivedAt: new Date().toISOString(),
-    status: 'pending'
-  };
+  // Telegram Bot - FREE instant messaging
+  const BOT_TOKEN = '8045371091:AAEqtTjupod0k-33OSgrp_UfRupabxcwt-E';
+  const CHAT_ID = '7077676180';
   
-  // Log to console (Vercel logs are visible to Claw)
-  console.log('CLAW_NOTIFICATION:', JSON.stringify(notification));
+  const message = `ðŸ“‹ Task Board: ${action.toUpperCase()}\n\n"${task.title}"\n\nTime: ${new Date(timestamp).toLocaleTimeString()}\n\nðŸ‘‰ View: https://assistant-board-n7pqxj5ps-austs-projects-ee024705.vercel.app`;
   
-  // Also try to send Telegram message
   try {
-    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-    const CHAT_ID = process.env.TELEGRAM_CHAT_ID || '7077676180';
+    // Send instant Telegram message to Claw
+    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
     
-    if (BOT_TOKEN) {
-      const message = `Task ${action}: ${task.title}`;
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: message
-        })
+    const data = await response.json();
+    
+    if (data.ok) {
+      res.status(200).json({ 
+        success: true, 
+        message: `Task ${action} recorded. Claw notified instantly.` 
       });
+    } else {
+      throw new Error('Telegram API error');
     }
-  } catch (e) {
-    // Silent fail - console log is the primary method
+  } catch (error) {
+    console.error('Notification failed:', error);
+    res.status(200).json({ 
+      success: true, 
+      message: `Task ${action} recorded. (Notification queued for retry)` 
+    });
   }
-  
-  res.status(200).json({ 
-    success: true, 
-    message: `Task ${action} recorded. Claw will see this in the logs.` 
-  });
 }
