@@ -43,6 +43,13 @@
       "type": "feature",
       "status": "scheduled",
       "details": "One app, two Acuity accounts. Customer enters address, app routes to correct zone (Austen vs Dad). Mobile-first, uses existing packages."
+    },
+    {
+      "id": "auto-1",
+      "title": "Check board notifications (auto-runs hourly)",
+      "schedule": "Every hour",
+      "type": "automation",
+      "status": "scheduled"
     }
   ],
   "completed": []
