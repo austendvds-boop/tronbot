@@ -21,6 +21,27 @@
       "schedule": "Every hour 6 AM - 10 PM",
       "type": "cron",
       "status": "scheduled"
+    },
+    {
+      "id": "task-1",
+      "title": "Build unified Acuity instructor widget",
+      "schedule": "Next",
+      "type": "feature",
+      "status": "scheduled"
+    },
+    {
+      "id": "task-2",
+      "title": "Add rescheduling workflow via chat",
+      "schedule": "Next",
+      "type": "feature",
+      "status": "scheduled"
+    },
+    {
+      "id": "task-3",
+      "title": "Test SMS automation with parents",
+      "schedule": "Tomorrow",
+      "type": "test",
+      "status": "scheduled"
     }
   ],
   "completed": []
