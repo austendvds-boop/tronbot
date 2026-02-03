@@ -5,10 +5,41 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState({ active: [], scheduled: [], completed: [] });
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [clawStatus, setClawStatus] = useState({ active: false, lastSeen: null });
+  const [prevCompletedCount, setPrevCompletedCount] = useState(0);
+  const [newCompleted, setNewCompleted] = useState(0);
 
   useEffect(() => {
     fetchTasks();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchTasks();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
+  
+  useEffect(() => {
+    // Track new completed tasks
+    if (tasks.completed.length > prevCompletedCount && prevCompletedCount > 0) {
+      setNewCompleted(tasks.completed.length - prevCompletedCount);
+    }
+    setPrevCompletedCount(tasks.completed.length);
+    setLastUpdate(Date.now());
+    
+    // Simulate Claw activity based on recent updates
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    if (tasks.completed.length > 0) {
+      const latestCompleted = tasks.completed[tasks.completed.length - 1];
+      if (new Date(latestCompleted.completedAt).getTime() > fiveMinutesAgo) {
+        setClawStatus({ active: true, lastSeen: new Date() });
+      } else {
+        setClawStatus({ active: false, lastSeen: new Date(latestCompleted.completedAt) });
+      }
+    }
+  }, [tasks]);
 
   const fetchTasks = async () => {
     try {
@@ -113,7 +144,60 @@ export default function Dashboard() {
       cursor: 'pointer',
       fontWeight: 'bold'
     },
-    empty: { color: '#8b949e', fontStyle: 'italic', padding: '20px', textAlign: 'center' }
+    empty: { color: '#8b949e', fontStyle: 'italic', padding: '20px', textAlign: 'center' },
+    statusBox: { 
+      background: '#161b22', 
+      padding: '12px 16px', 
+      borderRadius: '8px', 
+      border: '1px solid #30363d',
+      minWidth: '200px'
+    },
+    statusRow: { 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '8px',
+      marginBottom: '4px'
+    },
+    greenDot: { 
+      width: '10px', 
+      height: '10px', 
+      borderRadius: '50%', 
+      backgroundColor: '#3fb950',
+      boxShadow: '0 0 8px #3fb950',
+      animation: 'pulse 2s infinite'
+    },
+    grayDot: { 
+      width: '10px', 
+      height: '10px', 
+      borderRadius: '50%', 
+      backgroundColor: '#484f58'
+    },
+    statusText: { 
+      fontWeight: 'bold', 
+      fontSize: '14px',
+      color: '#c9d1d9'
+    },
+    lastSeen: { 
+      fontSize: '11px', 
+      color: '#8b949e',
+      marginLeft: '18px'
+    },
+    refreshTime: {
+      fontSize: '10px',
+      color: '#6e7681',
+      marginLeft: '18px',
+      marginTop: '2px'
+    },
+    notification: {
+      background: '#238636',
+      color: 'white',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      fontSize: '11px',
+      fontWeight: 'bold',
+      marginTop: '8px',
+      textAlign: 'center'
+    }
   };
 
   return (
@@ -127,12 +211,40 @@ export default function Dashboard() {
             color: #c9d1d9;
           }
           html { background-color: #0d1117; }
+          @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+          }
         `}</style>
       </Head>
       
       <header style={styles.header}>
-        <h1>Claw Task Board</h1>
-        <p>Deer Valley Driving School Assistant Dashboard</p>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div>
+            <h1 style={{margin: 0}}>Claw Task Board</h1>
+            <p style={{margin: '5px 0 0 0', color: '#8b949e'}}>Deer Valley Driving School Assistant Dashboard</p>
+          </div>
+          <div style={styles.statusBox}>
+            <div style={styles.statusRow}>
+              <span style={clawStatus.active ? styles.greenDot : styles.grayDot}></span>
+              <span style={styles.statusText}>
+                {clawStatus.active ? 'Claw is active' : 'Claw idle'}
+              </span>
+            </div>
+            <div style={styles.lastSeen}>
+              Last seen: {clawStatus.lastSeen ? new Date(clawStatus.lastSeen).toLocaleTimeString() : 'Never'}
+            </div>
+            <div style={styles.refreshTime}>
+              Updated: {new Date(lastUpdate).toLocaleTimeString()}
+            </div>
+            {newCompleted > 0 && (
+              <div style={styles.notification} onClick={() => setNewCompleted(0)}>
+                {newCompleted} task{newCompleted > 1 ? 's' : ''} completed! (click to dismiss)
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
       {/* Add Task */}
