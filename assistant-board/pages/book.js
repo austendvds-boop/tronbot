@@ -210,22 +210,30 @@ export default function BookingApp() {
   };
 
   // Step 1: Enter City
-  const Step1 = () => (
-    <div style={styles.card}>
-      <h2 style={{marginBottom: '8px'}}>Where are you located?</h2>
-      <p style={{color: '#8b949e', marginBottom: '20px'}}>Enter your city to see available lesson times.</p>
-      <input 
-        placeholder="e.g. Gilbert, AZ" 
-        style={styles.input} 
-        value={cityInput} 
-        onChange={e => setCityInput(e.target.value)}
-        onKeyPress={e => e.key === 'Enter' && detectLocation()}
-      />
-      <button style={{...styles.button, ...styles.primary}} onClick={detectLocation}>
-        Check Availability â†’
-      </button>
-    </div>
-  );
+  const Step1 = () => {
+    const [localInput, setLocalInput] = useState('');
+    
+    return (
+      <div style={styles.card}>
+        <h2 style={{marginBottom: '8px'}}>Where are you located?</h2>
+        <p style={{color: '#8b949e', marginBottom: '20px'}}>Enter your city to see available lesson times.</p>
+        <form onSubmit={(e) => { e.preventDefault(); setCityInput(localInput); detectLocation(); }}>
+          <input 
+            placeholder="e.g. Gilbert, AZ" 
+            style={styles.input} 
+            defaultValue={localInput}
+            onBlur={(e) => setLocalInput(e.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+          />
+          <button type="submit" style={{...styles.button, ...styles.primary}}>
+            Check Availability â†’
+          </button>
+        </form>
+      </div>
+    );
+  };
 
   // Step 2: Location & Instructors
   const Step2 = () => (
@@ -403,14 +411,26 @@ export default function BookingApp() {
         </div>
         
         <h3 style={{marginBottom: '12px'}}>Your Info</h3>
-        <input placeholder="First Name" style={styles.input} value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
-        <input placeholder="Last Name" style={styles.input} value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
-        <input placeholder="Email" type="email" style={styles.input} value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-        <input placeholder="Phone" type="tel" style={styles.input} value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+        <form id="bookingForm">
+          <input placeholder="First Name" style={styles.input} name="firstName" autoComplete="given-name" />
+          <input placeholder="Last Name" style={styles.input} name="lastName" autoComplete="family-name" />
+          <input placeholder="Email" type="email" style={styles.input} name="email" autoComplete="email" />
+          <input placeholder="Phone" type="tel" style={styles.input} name="phone" autoComplete="tel" />
+        </form>
         
         <button 
           style={{...styles.button, ...styles.primary}} 
-          onClick={() => window.open(acuityUrl, '_blank')}
+          onClick={() => {
+            const form = document.getElementById('bookingForm');
+            const data = new FormData(form);
+            setForm({
+              firstName: data.get('firstName'),
+              lastName: data.get('lastName'),
+              email: data.get('email'),
+              phone: data.get('phone')
+            });
+            window.open(acuityUrl, '_blank');
+          }}
         >
           Pay ${pkg.price} & Schedule â†’
         </button>
