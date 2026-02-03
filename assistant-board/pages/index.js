@@ -65,35 +65,37 @@ export default function Dashboard() {
   };
 
   const styles = {
-    container: { maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui, sans-serif' },
+    container: { maxWidth: '1400px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui, sans-serif' },
     header: { borderBottom: '2px solid #333', paddingBottom: '10px', marginBottom: '20px' },
-    section: { marginBottom: '30px', background: '#f5f5f5', padding: '15px', borderRadius: '8px' },
-    sectionTitle: { fontSize: '18px', fontWeight: 'bold', marginBottom: '10px', color: '#333' },
-    taskList: { listStyle: 'none', padding: 0 },
-    taskItem: { 
+    board: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' },
+    column: { background: '#f5f5f5', padding: '15px', borderRadius: '8px', minHeight: '400px' },
+    columnTitle: { fontSize: '16px', fontWeight: 'bold', marginBottom: '15px', padding: '10px', background: '#333', color: 'white', borderRadius: '4px', textAlign: 'center' },
+    taskList: { listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' },
+    taskCard: { 
       background: 'white', 
       padding: '12px', 
-      marginBottom: '8px', 
-      borderRadius: '4px',
-      borderLeft: '4px solid #0070f3',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
+      borderRadius: '6px',
+      borderTop: '4px solid #0070f3',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     },
-    completedItem: { borderLeftColor: '#00c853', opacity: 0.7 },
-    scheduledItem: { borderLeftColor: '#ffab00' },
+    completedCard: { borderTopColor: '#00c853' },
+    scheduledCard: { borderTopColor: '#ffab00' },
+    cardTitle: { fontWeight: 'bold', marginBottom: '5px', fontSize: '14px' },
+    cardMeta: { fontSize: '11px', color: '#666', marginBottom: '8px' },
     button: { 
       padding: '6px 12px', 
       border: 'none', 
       borderRadius: '4px', 
       cursor: 'pointer',
-      fontSize: '12px'
+      fontSize: '11px',
+      marginRight: '5px'
     },
     startBtn: { background: '#0070f3', color: 'white' },
     completeBtn: { background: '#00c853', color: 'white' },
+    addSection: { background: '#f5f5f5', padding: '15px', borderRadius: '8px', marginBottom: '20px' },
     input: { 
       padding: '10px', 
-      width: '70%', 
+      width: '60%', 
       border: '1px solid #ddd', 
       borderRadius: '4px',
       marginRight: '10px'
@@ -106,8 +108,7 @@ export default function Dashboard() {
       borderRadius: '4px',
       cursor: 'pointer'
     },
-    empty: { color: '#888', fontStyle: 'italic', padding: '10px' },
-    status: { fontSize: '11px', color: '#666', marginTop: '4px' }
+    empty: { color: '#888', fontStyle: 'italic', padding: '20px', textAlign: 'center' }
   };
 
   return (
@@ -122,8 +123,7 @@ export default function Dashboard() {
       </header>
 
       {/* Add Task */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>âž• Add New Task</div>
+      <div style={styles.addSection}>
         <form onSubmit={addTask}>
           <input
             type="text"
@@ -132,80 +132,77 @@ export default function Dashboard() {
             placeholder="What should I work on?"
             style={styles.input}
           />
-          <button type="submit" style={styles.submitBtn}>Add Task</button>
+          <button type="submit" style={styles.submitBtn}>âž• Add Task</button>
         </form>
       </div>
 
-      {/* Active Tasks */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>â–¶ï¸ Active Tasks ({tasks.active.length})</div>
-        {tasks.active.length === 0 ? (
-          <div style={styles.empty}>No active tasks</div>
-        ) : (
-          <ul style={styles.taskList}>
-            {tasks.active.map(task => (
-              <li key={task.id} style={styles.taskItem}>
-                <div>
-                  <strong>{task.title}</strong>
-                  <div style={styles.status}>Started: {new Date(task.startedAt).toLocaleString()}</div>
-                </div>
-                <button 
-                  onClick={() => completeTask(task.id)}
-                  style={{...styles.button, ...styles.completeBtn}}
-                >
-                  âœ“ Complete
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+      {/* Kanban Board */}
+      <div style={styles.board}>
+        {/* Active Column */}
+        <div style={styles.column}>
+          <div style={styles.columnTitle}>â–¶ï¸ ACTIVE ({tasks.active.length})</div>
+          {tasks.active.length === 0 ? (
+            <div style={styles.empty}>No active tasks</div>
+          ) : (
+            <ul style={styles.taskList}>
+              {tasks.active.map(task => (
+                <li key={task.id} style={styles.taskCard}>
+                  <div style={styles.cardTitle}>{task.title}</div>
+                  <div style={styles.cardMeta}>Started: {new Date(task.startedAt).toLocaleTimeString()}</div>
+                  <button 
+                    onClick={() => completeTask(task.id)}
+                    style={{...styles.button, ...styles.completeBtn}}
+                  >
+                    âœ“ Done
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Scheduled Column */}
+        <div style={styles.column}>
+          <div style={styles.columnTitle}>ðŸ“… SCHEDULED ({tasks.scheduled.length})</div>
+          {tasks.scheduled.length === 0 ? (
+            <div style={styles.empty}>No scheduled tasks</div>
+          ) : (
+            <ul style={styles.taskList}>
+              {tasks.scheduled.map(task => (
+                <li key={task.id} style={{...styles.taskCard, ...styles.scheduledCard}}>
+                  <div style={styles.cardTitle}>{task.title}</div>
+                  {task.schedule && <div style={styles.cardMeta}>â° {task.schedule}</div>}
+                  <button 
+                    onClick={() => startTask(task.id)}
+                    style={{...styles.button, ...styles.startBtn}}
+                  >
+                    â–¶ Start
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Completed Column */}
+        <div style={styles.column}>
+          <div style={styles.columnTitle}>âœ… DONE ({tasks.completed.length})</div>
+          {tasks.completed.length === 0 ? (
+            <div style={styles.empty}>Nothing completed today</div>
+          ) : (
+            <ul style={styles.taskList}>
+              {tasks.completed.map(task => (
+                <li key={task.id} style={{...styles.taskCard, ...styles.completedCard}}>
+                  <div style={styles.cardTitle}>{task.title}</div>
+                  <div style={styles.cardMeta}>âœ“ {new Date(task.completedAt).toLocaleTimeString()}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
-      {/* Scheduled Tasks */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>ðŸ“… Scheduled Tasks ({tasks.scheduled.length})</div>
-        {tasks.scheduled.length === 0 ? (
-          <div style={styles.empty}>No scheduled tasks</div>
-        ) : (
-          <ul style={styles.taskList}>
-            {tasks.scheduled.map(task => (
-              <li key={task.id} style={{...styles.taskItem, ...styles.scheduledItem}}>
-                <div>
-                  <strong>{task.title}</strong>
-                  {task.schedule && <div style={styles.status}>â° {task.schedule}</div>}
-                </div>
-                <button 
-                  onClick={() => startTask(task.id)}
-                  style={{...styles.button, ...styles.startBtn}}
-                >
-                  â–¶ Start
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Completed Tasks */}
-      <div style={styles.section}>
-        <div style={styles.sectionTitle}>âœ… Completed Today ({tasks.completed.length})</div>
-        {tasks.completed.length === 0 ? (
-          <div style={styles.empty}>Nothing completed yet today</div>
-        ) : (
-          <ul style={styles.taskList}>
-            {tasks.completed.map(task => (
-              <li key={task.id} style={{...styles.taskItem, ...styles.completedItem}}>
-                <div>
-                  <strong>{task.title}</strong>
-                  <div style={styles.status}>Completed: {new Date(task.completedAt).toLocaleString()}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {loading && <p>Loading tasks...</p>}
+      {loading && <p style={{textAlign: 'center'}}>Loading tasks...</p>}
     </div>
   );
 }
