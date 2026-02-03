@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [clawStatus, setClawStatus] = useState({ active: false, lastSeen: null });
   const [prevCompletedCount, setPrevCompletedCount] = useState(0);
   const [newCompleted, setNewCompleted] = useState(0);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     // Load from localStorage if available, else use imported JSON
@@ -111,6 +112,10 @@ export default function Dashboard() {
     setTasks(updatedTasks);
     localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
     setNewTask('');
+    
+    // Show notification
+    setNotification(`Task "${newTask}" added! Message @NotZlaner69420 on Telegram to notify Claw.`);
+    setTimeout(() => setNotification(null), 5000);
   };
 
   const completeTask = async (id) => {
@@ -257,6 +262,15 @@ export default function Dashboard() {
       fontWeight: 'bold',
       marginTop: '8px',
       textAlign: 'center'
+    },
+    notificationBanner: {
+      background: '#1f6feb',
+      color: 'white',
+      padding: '10px',
+      borderRadius: '4px',
+      fontSize: '12px',
+      marginTop: '10px',
+      textAlign: 'center'
     }
   };
 
@@ -319,6 +333,11 @@ export default function Dashboard() {
           />
           <button type="submit" style={styles.submitBtn}>Add Task</button>
         </form>
+        {notification && (
+          <div style={styles.notificationBanner}>
+            {notification}
+          </div>
+        )}
       </div>
 
       {/* Kanban Board */}
