@@ -23,6 +23,14 @@
       "status": "scheduled"
     },
     {
+      "id": "task-5",
+      "title": "Build combined Acuity dashboard (both accounts)",
+      "schedule": "Now",
+      "type": "feature",
+      "status": "active",
+      "startedAt": "2026-02-03T20:43:00Z"
+    },
+    {
       "id": "task-3",
       "title": "Test SMS automation with parents",
       "schedule": "Tomorrow",
