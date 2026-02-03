@@ -142,6 +142,8 @@ export default function Dashboard() {
   const deleteTask = async (id) => {
     if (!confirm('Delete this task?')) return;
     
+    const taskToDelete = tasks.scheduled.find(t => t.id === id);
+    
     const updatedTasks = {
       ...tasks,
       scheduled: tasks.scheduled.filter(t => t.id !== id)
@@ -149,6 +151,12 @@ export default function Dashboard() {
     
     setTasks(updatedTasks);
     localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
+    
+    // Show notification
+    if (taskToDelete) {
+      setNotification(`Task "${taskToDelete.title}" deleted. Message @NotZlaner69420 on Telegram if this affects Claw's work.`);
+      setTimeout(() => setNotification(null), 5000);
+    }
   };
 
   const startTask = async (id) => {
