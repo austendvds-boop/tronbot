@@ -13,9 +13,73 @@ export default function AcuityDashboard() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [studentHistory, setStudentHistory] = useState(null);
 
-  // Mock student history database
-  const studentHistory = {
+  // Student history - starts with mock data, updates from API
+  const [studentHistory, setStudentHistory] = useState({
+    'Will Weng': {
+      package: '4 Lesson Package',
+      completed: [
+        { date: '2026-01-15', time: '9:00am', instructor: 'Aaron', location: 'Tempe', lessonNum: 1, notes: 'Basic controls, parking' },
+        { date: '2026-01-22', time: '10:00am', instructor: 'Aaron', location: 'Tempe', lessonNum: 2, notes: 'City driving, intersections' }
+      ],
+      upcoming: [
+        { date: '2026-02-03', time: '8:30am', instructor: 'Aaron', location: 'Tempe', lessonNum: 3 }
+      ],
+      remaining: 1
+    },
+    'Demarious Johnson': {
+      package: '4 Lesson Package',
+      completed: [
+        { date: '2026-01-20', time: '8:30am', instructor: 'Ryan', location: 'Gilbert', lessonNum: 1, notes: 'Intro, neighborhood driving' },
+        { date: '2026-01-27', time: '8:30am', instructor: 'Ryan', location: 'Gilbert', lessonNum: 2, notes: 'Highway merge, lane changes' }
+      ],
+      upcoming: [
+        { date: '2026-02-03', time: '8:30am', instructor: 'Ryan', location: 'Gilbert', lessonNum: 3 }
+      ],
+      remaining: 1
+    },
+    'Enzo Cascio': {
+      package: '4 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '2:30pm', instructor: 'Ryan', location: 'Scottsdale', lessonNum: 1 }
+      ],
+      remaining: 3
+    },
+    'Alexis Hayes': {
+      package: 'Single Lesson',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '2:30pm', instructor: 'Austen', location: 'Greenway', lessonNum: 1 }
+      ],
+      remaining: 0
+    },
+    'Thomas Chutes': {
+      package: '4 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '2:30pm', instructor: 'Aaron', location: 'Gilbert', lessonNum: 1 }
+      ],
+      remaining: 3
+    },
+    'Keaton Huls': {
+      package: '2 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '5:30pm', instructor: 'Ryan', location: 'Downtown Phoenix', lessonNum: 1 }
+      ],
+      remaining: 1
+    },
+    'Lily Vaughan': {
+      package: 'Unknown',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '5:30pm', instructor: 'Aaron', location: 'Gilbert', lessonNum: 1 }
+      ],
+      remaining: '?'
+    },
+  const defaultHistory = {
     'Will Weng': {
       package: '4 Lesson Package',
       completed: [
@@ -134,6 +198,9 @@ export default function AcuityDashboard() {
       remaining: 3
     }
   };
+  
+  // Use default if not set yet
+  const historyData = studentHistory || defaultHistory;
 
   useEffect(() => {
     fetchCombinedSchedule();
@@ -161,32 +228,53 @@ export default function AcuityDashboard() {
 
   const fetchCombinedSchedule = async () => {
     try {
-      const mockData = {
-        austen: [
-          { id: '1', student: 'Will Weng', time: '8:30am', instructor: 'Aaron', lesson: '3 of 4', location: 'Tempe', date: '2026-02-03' },
-          { id: '2', student: 'Demarious Johnson', time: '8:30am', instructor: 'Ryan', lesson: '3 of 4', location: 'Gilbert', date: '2026-02-03' },
-          { id: '3', student: 'Enzo Cascio', time: '2:30pm', instructor: 'Ryan', lesson: '1 of 4', location: 'Scottsdale', date: '2026-02-03' },
-          { id: '4', student: 'Alexis Hayes', time: '2:30pm', instructor: 'Austen', lesson: 'Single', location: 'Greenway', date: '2026-02-03' },
-          { id: '5', student: 'Thomas Chutes', time: '2:30pm', instructor: 'Aaron', lesson: '1 of 4', location: 'Gilbert', date: '2026-02-03' },
-          { id: '6', student: 'Keaton Huls', time: '5:30pm', instructor: 'Ryan', lesson: '1 of 2', location: 'Downtown Phoenix', date: '2026-02-03' },
-          { id: '7', student: 'Lily Vaughan', time: '5:30pm', instructor: 'Aaron', lesson: '1 of ?', location: 'Gilbert', date: '2026-02-03' }
-        ],
-        dad: [
-          { id: '8', student: 'Brayden Miller', time: '2:30pm', instructor: 'Ernie', lesson: '1 of 4', location: 'Peoria', date: '2026-02-04' },
-          { id: '9', student: 'Samantha Jones', time: '9:00am', instructor: 'Michelle', lesson: '2 of 4', location: 'Glendale', date: '2026-02-03' },
-          { id: '10', student: 'Marcus Chen', time: '11:00am', instructor: 'Allan', lesson: '3 of 4', location: 'Surprise', date: '2026-02-03' },
-          { id: '11', student: 'Emma Rodriguez', time: '1:00pm', instructor: 'Bob', lesson: '1 of 4', location: 'Sun City', date: '2026-02-03' },
-          { id: '12', student: 'Tyler Johnson', time: '3:30pm', instructor: 'Brandon', lesson: '2 of 2', location: 'Goodyear', date: '2026-02-03' },
-          { id: '13', student: 'Ava Smith', time: '5:00pm', instructor: 'Freddy', lesson: '1 of 4', location: 'Litchfield Park', date: '2026-02-03' }
-        ]
-      };
+      // Fetch real data from Acuity API
+      const response = await fetch('/api/schedule');
+      const data = await response.json();
       
-      setSchedule(mockData);
-      setFilteredSchedule(mockData);
+      setSchedule({ austen: data.austen, dad: data.dad });
+      setFilteredSchedule({ austen: data.austen, dad: data.dad });
+      
+      // Update student history from real data
+      updateStudentHistoryFromAPI([...data.austen, ...data.dad]);
     } catch (err) {
-      setError('Failed to load schedule');
+      console.error('Failed to load schedule:', err);
+      setError('Failed to load schedule - showing cached data');
+      // Fallback to empty if API fails
+      setSchedule({ austen: [], dad: [] });
+      setFilteredSchedule({ austen: [], dad: [] });
     }
     setLoading(false);
+  };
+  
+  const updateStudentHistoryFromAPI = (appointments) => {
+    // Build history from real appointment data
+    const history = {};
+    
+    appointments.forEach(apt => {
+      if (!history[apt.student]) {
+        history[apt.student] = {
+          package: apt.lesson.includes('Single') ? 'Single Lesson' : 
+                   apt.lesson.includes('of 4') ? '4 Lesson Package' :
+                   apt.lesson.includes('of 2') ? '2 Lesson Package' : 'Unknown',
+          completed: [],
+          upcoming: [],
+          remaining: 0
+        };
+      }
+      
+      // Add to upcoming (for now - would need historical data from API)
+      history[apt.student].upcoming.push({
+        date: apt.date,
+        time: apt.time,
+        instructor: apt.instructor,
+        location: apt.location,
+        lessonNum: parseInt(apt.lesson.split(' of ')[0]) || 1
+      });
+    });
+    
+    // Merge with existing mock history for demo
+    setStudentHistory(prev => ({ ...prev, ...history }));
   };
 
   const handleReschedule = (lesson) => {
@@ -377,7 +465,7 @@ export default function AcuityDashboard() {
   const totalLessons = filteredSchedule.austen.length + filteredSchedule.dad.length;
 
   const renderLessonCard = (lesson, accountType) => {
-    const history = studentHistory[lesson.student];
+    const history = historyData[lesson.student];
     const completedCount = history?.completed?.length || 0;
     const totalLessons = history?.package?.includes('4') ? 4 : history?.package?.includes('2') ? 2 : history?.package?.includes('Single') ? 1 : 4;
     const progressPercent = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
@@ -503,23 +591,23 @@ export default function AcuityDashboard() {
       </div>
 
       {/* History Modal */}
-      {showHistoryModal && selectedStudent && studentHistory[selectedStudent] && (
+      {showHistoryModal && selectedStudent && historyData[selectedStudent] && (
         <div style={styles.modal} onClick={() => setShowHistoryModal(false)}>
           <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
             <h3 style={styles.modalTitle}>{selectedStudent} - Lesson History</h3>
             
             {/* Package Info */}
             <div style={styles.packageInfo}>
-              <strong>Package:</strong> {studentHistory[selectedStudent].package}<br/>
-              <strong>Completed:</strong> {studentHistory[selectedStudent].completed.length} lessons<br/>
-              <strong>Remaining:</strong> {studentHistory[selectedStudent].remaining} lessons
+              <strong>Package:</strong> {historyData[selectedStudent].package}<br/>
+              <strong>Completed:</strong> {historyData[selectedStudent].completed.length} lessons<br/>
+              <strong>Remaining:</strong> {historyData[selectedStudent].remaining} lessons
             </div>
 
             {/* Completed Lessons */}
-            {studentHistory[selectedStudent].completed.length > 0 && (
+            {historyData[selectedStudent].completed.length > 0 && (
               <div style={styles.historySection}>
                 <div style={styles.historyTitle}>Completed Lessons</div>
-                {studentHistory[selectedStudent].completed.map((lesson, idx) => (
+                {historyData[selectedStudent].completed.map((lesson, idx) => (
                   <div key={idx} style={styles.historyItem}>
                     <div style={styles.historyDate}>
                       Lesson {lesson.lessonNum}: {lesson.date} at {lesson.time}
@@ -536,10 +624,10 @@ export default function AcuityDashboard() {
             )}
 
             {/* Upcoming Lessons */}
-            {studentHistory[selectedStudent].upcoming.length > 0 && (
+            {historyData[selectedStudent].upcoming.length > 0 && (
               <div style={styles.historySection}>
                 <div style={styles.historyTitle}>Upcoming</div>
-                {studentHistory[selectedStudent].upcoming.map((lesson, idx) => (
+                {historyData[selectedStudent].upcoming.map((lesson, idx) => (
                   <div key={idx} style={{...styles.historyItem, borderColor: '#238636'}}>
                     <div style={styles.historyDate}>
                       Lesson {lesson.lessonNum}: {lesson.date} at {lesson.time}
