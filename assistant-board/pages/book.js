@@ -146,24 +146,33 @@ export default function BookingApp() {
     setStep(2);
   };
 
-  // Fetch real availability from Acuity
+  // Fetch real availability from Acuity (Arizona/MST timezone)
   const fetchAvailability = async () => {
     setLoading(true);
     
-    // For now, using mock data. In production, this calls your API endpoint
-    // that queries Acuity with calendarID + appointmentTypeID
+    // Generate times in Arizona timezone (MST, UTC-7)
     const mockTimes = [];
-    const startDate = new Date();
+    const now = new Date();
+    
+    // Get current date in Arizona timezone
+    const azOffset = -7; // MST is UTC-7
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const azTime = new Date(utc + (3600000 * azOffset));
     
     for (let i = 0; i < 14; i++) {
-      const date = new Date(startDate);
+      const date = new Date(azTime);
       date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
       
-      // Skip Sundays
+      // Format as YYYY-MM-DD in local time (which is now Arizona time)
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      // Skip Sundays (0 = Sunday)
       if (date.getDay() === 0) continue;
       
-      // Generate times (8am - 5pm)
+      // Generate times (Arizona business hours)
       const times = ['8:00am', '10:30am', '1:00pm', '3:30pm'];
       if (date.getDay() !== 6) times.push('5:00pm'); // No evening on Saturday
       
@@ -171,7 +180,7 @@ export default function BookingApp() {
         mockTimes.push({
           date: dateStr,
           time: time,
-          datetime: `${dateStr}T${time.replace('am', ':00').replace('pm', ':00')}`,
+          datetime: `${dateStr}T${time}`,
           instructor: location.calendars ? location.calendars[0].name : location.instructors
         });
       });
@@ -277,11 +286,12 @@ export default function BookingApp() {
         <div style={{maxHeight: '400px', overflowY: 'auto'}}>
           {dates.map(date => {
             const dayTimes = availability.filter(a => a.date === date);
-            const dateObj = new Date(date);
+            const [y, m, d] = date.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
             return (
               <div key={date} style={{marginBottom: '16px'}}>
                 <div style={{fontWeight: 'bold', marginBottom: '8px', padding: '8px 0', borderBottom: '1px solid #30363d'}}>
-                  {dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  {dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/Phoenix' })}
                 </div>
                 <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px'}}>
                   {dayTimes.map(slot => {
@@ -324,11 +334,16 @@ export default function BookingApp() {
             <div style={{marginBottom: '12px', fontWeight: 'bold'}}>
               Selected ({selectedTimes.length}/{required})
             </div>
-            {selectedTimes.map(t => (
-              <div key={t.datetime} style={{fontSize: '14px', color: '#8b949e', padding: '4px 0'}}>
-                {new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {t.time}
-              </div>
-            ))}
+            {selectedTimes.map(t => {
+              // Parse date properly for Arizona timezone
+              const [y, m, d] = t.date.split('-').map(Number);
+              const dateObj = new Date(y, m - 1, d);
+              return (
+                <div key={t.datetime} style={{fontSize: '14px', color: '#8b949e', padding: '4px 0'}}>
+                  {dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Phoenix' })} at {t.time}
+                </div>
+              );
+            })}
           </div>
         )}
         
@@ -402,11 +417,15 @@ export default function BookingApp() {
           
           <div>
             <div style={{fontSize: '14px', color: '#8b949e', marginBottom: '8px'}}>Your lesson times:</div>
-            {selectedTimes.map(t => (
-              <div key={t.datetime} style={{padding: '4px 0'}}>
-                {new Date(t.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {t.time}
-              </div>
-            ))}
+            {selectedTimes.map(t => {
+              const [y, m, d] = t.date.split('-').map(Number);
+              const dateObj = new Date(y, m - 1, d);
+              return (
+                <div key={t.datetime} style={{padding: '4px 0'}}>
+                  {dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/Phoenix' })} at {t.time}
+                </div>
+              );
+            })}
           </div>
         </div>
         
