@@ -479,27 +479,43 @@ export default function BookingApp() {
         
         <button 
           style={{...styles.button, ...styles.primary}} 
-          onClick={() => {
+          onClick={async () => {
             const form = document.getElementById('bookingForm');
             const data = new FormData(form);
             const customerInfo = {
               firstName: data.get('firstName'),
               lastName: data.get('lastName'),
               email: data.get('email'),
-              phone: data.get('phone'),
-              package: pkg.name,
-              location: location.name,
-              times: selectedTimes.map(t => `${t.date} ${t.time}`).join(', ')
+              phone: data.get('phone')
             };
             setForm(customerInfo);
             
-            // For testing - use Stripe link
-            // In production, this would route to correct Stripe account based on location
-            const stripeUrl = 'https://buy.stripe.com/5kQ28s5sDe4o39x0em2ZO18';
-            window.open(stripeUrl, '_blank');
+            // DEMO: Simulate payment + auto-booking
+            alert('DEMO: Opening Stripe checkout...\n\nIn production, after payment, lessons auto-book.');
+            
+            // Simulate webhook call (normally this happens after Stripe confirms payment)
+            try {
+              const response = await fetch('/api/webhook-demo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  customer: customerInfo,
+                  package: pkg.name,
+                  location: location.name,
+                  times: selectedTimes,
+                  account: location.account
+                })
+              });
+              const result = await response.json();
+              
+              alert(`âœ… DEMO: Payment received!\n\nConfirmation: ${result.confirmationNumber}\n\n${result.bookings.length} lessons auto-booked:\n${result.bookings.map(b => `â€¢ ${b.datetime}`).join('\n')}\n\nConfirmation email sent to ${customerInfo.email}`);
+              
+            } catch (err) {
+              console.error('Demo error:', err);
+            }
           }}
         >
-          Pay ${pkg.price} â†’
+          DEMO: Pay ${pkg.price} â†’
         </button>
       </div>
     );
