@@ -16,13 +16,6 @@
       "status": "scheduled"
     },
     {
-      "id": "cron-3",
-      "title": "Hourly heartbeat check",
-      "schedule": "Every hour 6 AM - 10 PM",
-      "type": "cron",
-      "status": "scheduled"
-    },
-    {
       "id": "task-1",
       "title": "Build unified Acuity instructor widget",
       "schedule": "Next",
