@@ -102,19 +102,47 @@ export default function Booking() {
   }
 
   if (step === 3) {
+    // Check if time can be selected (1 lesson per week rule)
+    const canSelectTime = (index) => {
+      if (times.includes(index)) return true; // Can always deselect
+      if (times.length >= pkg.lessons) return false; // Max lessons reached
+      
+      // Check 7-day restriction
+      const selectedDate = new Date(mockTimes[index].date);
+      for (const selectedIndex of times) {
+        const existingDate = new Date(mockTimes[selectedIndex].date);
+        const diffDays = Math.abs((selectedDate - existingDate) / (1000 * 60 * 60 * 24));
+        if (diffDays < 7) return false; // Too close to existing lesson
+      }
+      return true;
+    };
+
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
-        <div style={styles.header}><h1 style={styles.title}>Select {pkg.lessons} Times</h1></div>
+        <div style={styles.header}>
+          <h1 style={styles.title}>Select {pkg.lessons} Times</h1>
+          <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week minimum</p>
+        </div>
         <div style={styles.card}>
           <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
             {mockTimes.map((t, i) => {
               const isSelected = times.includes(i);
+              const canSelect = canSelectTime(i);
               return (
-                <button key={i} style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}} onClick={() => {
-                  if (isSelected) setTimes(times.filter(x => x !== i));
-                  else if (times.length < pkg.lessons) setTimes([...times, i]);
-                }}>
+                <button 
+                  key={i} 
+                  style={{
+                    ...styles.timeBtn, 
+                    ...(isSelected && styles.timeSelected),
+                    ...(!canSelect && !isSelected && {opacity: 0.3, cursor: 'not-allowed'})
+                  }} 
+                  onClick={() => {
+                    if (isSelected) setTimes(times.filter(x => x !== i));
+                    else if (canSelect) setTimes([...times, i]);
+                  }}
+                  disabled={!canSelect && !isSelected}
+                >
                   {t.date.slice(5)} {t.time}
                 </button>
               );
@@ -126,6 +154,28 @@ export default function Booking() {
     );
   }
 
+  // Step 4: Student Info
+  if (step === 4) {
+    return (
+      <div style={styles.container}>
+        <Head><title>Book | DVDS</title></Head>
+        <div style={styles.header}><h1 style={styles.title}>Student Info</h1></div>
+        <div style={styles.card}>
+          <input placeholder="First Name" style={styles.input} />
+          <input placeholder="Last Name" style={styles.input} />
+          <input placeholder="Email" type="email" style={styles.input} />
+          <input placeholder="Phone" type="tel" style={styles.input} />
+          <input placeholder="Address" style={styles.input} />
+          <textarea placeholder="Notes (optional)" style={{...styles.input, minHeight: '80px', resize: 'vertical'}} />
+          <button style={styles.button} onClick={() => setStep(5)}>
+            Review & Pay â†’
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 5: Review & Pay
   return (
     <div style={styles.container}>
       <Head><title>Book | DVDS</title></Head>
@@ -134,10 +184,6 @@ export default function Booking() {
         <p><strong>{location.name}</strong> â€¢ {pkg.name}</p>
         <p style={styles.price}>${pkg.price}</p>
         <p>{times.length} lessons selected</p>
-        <input placeholder="First Name" style={styles.input} />
-        <input placeholder="Last Name" style={styles.input} />
-        <input placeholder="Email" type="email" style={styles.input} />
-        <input placeholder="Phone" type="tel" style={styles.input} />
         <button style={styles.button} onClick={() => alert(`DEMO: Paid $${pkg.price}! Confirmation: DVDS-${Math.random().toString(36).substr(2,8).toUpperCase()}`)}>
           Pay ${pkg.price} â†’
         </button>
