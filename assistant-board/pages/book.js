@@ -213,60 +213,69 @@ export default function Booking() {
   }
 
   // Step 4: Student Info
+  // Step 4: Pay First
+  const [paid, setPaid] = useState(false);
+  
   if (step === 4) {
+    // Check for multiple per week violation
+    const hasViolation = () => {
+      for (let i = 0; i < times.length; i++) {
+        for (let j = i + 1; j < times.length; j++) {
+          const date1 = new Date(mockTimes[times[i]].date);
+          const date2 = new Date(mockTimes[times[j]].date);
+          const diffDays = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
+          if (diffDays < 7) return true;
+        }
+      }
+      return false;
+    };
+
+    const violation = hasViolation();
+    const surcharge = violation ? 50 : 0;
+    const totalPrice = pkg.price + surcharge;
+
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
-        <div style={styles.header}><h1 style={styles.title}>Student Info</h1></div>
+        <div style={styles.header}><h1 style={styles.title}>Complete Payment</h1></div>
         <div style={styles.card}>
-          <input placeholder="First Name" style={styles.input} />
-          <input placeholder="Last Name" style={styles.input} />
-          <input placeholder="Email" type="email" style={styles.input} />
-          <input placeholder="Phone" type="tel" style={styles.input} />
-          <input placeholder="Address" style={styles.input} />
-          <textarea placeholder="Notes (optional)" style={{...styles.input, minHeight: '80px', resize: 'vertical'}} />
-          <button style={styles.button} onClick={() => setStep(5)}>
-            Review & Pay â†’
+          <p><strong>{location.name}</strong> â€¢ {pkg.name}</p>
+          <p style={styles.price}>${totalPrice}</p>
+          {violation && (
+            <div style={{background: '#da3633', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px'}}>
+              <strong>âš ï¸ Multiple Lessons Per Week Surcharge: +$50</strong>
+              <p style={{margin: '4px 0 0 0'}}>Base: ${pkg.price} + Surcharge: $50 = ${totalPrice}</p>
+            </div>
+          )}
+          <p>{times.length} lessons selected</p>
+          <button style={styles.button} onClick={() => {alert(`DEMO: Paid $${totalPrice}!`); setPaid(true); setStep(5);}}>
+            Pay ${totalPrice} â†’
           </button>
         </div>
       </div>
     );
   }
 
-  // Step 5: Review & Pay
-  // Check for multiple per week violation
-  const hasViolation = () => {
-    for (let i = 0; i < times.length; i++) {
-      for (let j = i + 1; j < times.length; j++) {
-        const date1 = new Date(mockTimes[times[i]].date);
-        const date2 = new Date(mockTimes[times[j]].date);
-        const diffDays = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
-        if (diffDays < 7) return true;
-      }
-    }
-    return false;
-  };
-
-  const violation = hasViolation();
-  const surcharge = violation ? 50 : 0;
-  const totalPrice = pkg.price + surcharge;
-
+  // Step 5: Student Info After Payment
   return (
     <div style={styles.container}>
       <Head><title>Book | DVDS</title></Head>
-      <div style={styles.header}><h1 style={styles.title}>Complete Booking</h1></div>
+      <div style={styles.header}>
+        <h1 style={styles.title}>Student Info</h1>
+        <p style={{color: '#238636'}}>âœ… Payment Received</p>
+      </div>
       <div style={styles.card}>
-        <p><strong>{location.name}</strong> â€¢ {pkg.name}</p>
-        <p style={styles.price}>${totalPrice}</p>
-        {violation && (
-          <div style={{background: '#da3633', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px'}}>
-            <strong>âš ï¸ Multiple Lessons Per Week Surcharge: +$50</strong>
-            <p style={{margin: '4px 0 0 0'}}>Base: ${pkg.price} + Surcharge: $50 = ${totalPrice}</p>
-          </div>
-        )}
-        <p>{times.length} lessons selected</p>
-        <button style={styles.button} onClick={() => alert(`DEMO: Paid $${totalPrice}! Confirmation: DVDS-${Math.random().toString(36).substr(2,8).toUpperCase()}`)}>
-          Pay ${totalPrice} â†’
+        <p style={{marginBottom: '16px', color: '#8b949e'}}>
+          Complete your booking details below
+        </p>
+        <input placeholder="First Name" style={styles.input} />
+        <input placeholder="Last Name" style={styles.input} />
+        <input placeholder="Email" type="email" style={styles.input} />
+        <input placeholder="Phone" type="tel" style={styles.input} />
+        <input placeholder="Address" style={styles.input} />
+        <textarea placeholder="Notes (optional)" style={{...styles.input, minHeight: '80px', resize: 'vertical'}} />
+        <button style={styles.button} onClick={() => alert(`Booking confirmed! Confirmation: DVDS-${Math.random().toString(36).substr(2,8).toUpperCase()}`)}>
+          Complete Booking â†’
         </button>
       </div>
     </div>
