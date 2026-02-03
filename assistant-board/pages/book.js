@@ -272,7 +272,6 @@ export default function BookingApp() {
 
   // Step 3: Calendar View
   const Step3 = () => {
-    const required = getRequiredLessons();
     const dates = [...new Set(availability.map(a => a.date))].slice(0, 14);
     
     return (
@@ -332,7 +331,7 @@ export default function BookingApp() {
         {selectedTimes.length > 0 && (
           <div style={{marginTop: '20px', padding: '16px', background: '#21262d', borderRadius: '10px'}}>
             <div style={{marginBottom: '12px', fontWeight: 'bold'}}>
-              Selected ({selectedTimes.length}/{required})
+              Selected {selectedTimes.length} time{selectedTimes.length > 1 ? 's' : ''}
             </div>
             {selectedTimes.map(t => {
               // Parse date properly for Arizona timezone
@@ -347,9 +346,9 @@ export default function BookingApp() {
           </div>
         )}
         
-        {selectedTimes.length === required && (
+        {selectedTimes.length > 0 && (
           <button style={{...styles.button, ...styles.primary, marginTop: '16px'}} onClick={() => setStep(4)}>
-            Select Package â†’
+            Continue to Package â†’
           </button>
         )}
       </div>
@@ -362,14 +361,17 @@ export default function BookingApp() {
       <a style={styles.back} onClick={() => setStep(3)}>â† Back</a>
       <h2 style={{marginBottom: '8px'}}>Choose Your Package</h2>
       <p style={{color: '#8b949e', marginBottom: '16px'}}>
-        You selected {selectedTimes.length} lesson{selectedTimes.length > 1 ? 's' : ''}
+        You selected {selectedTimes.length} time{selectedTimes.length > 1 ? 's' : ''}
+      </p>
+      <p style={{color: '#d29922', fontSize: '14px', marginBottom: '16px'}}>
+        Pick a package that matches your selected times
       </p>
       
       {Object.entries(packages).map(([key, pkg]) => (
         <div 
           key={key}
-          style={{...styles.package, ...(selectedPkg === key && styles.packageSelected)}}
-          onClick={() => setSelectedPkg(key)}
+          style={{...styles.package, ...(selectedPkg === key && styles.packageSelected), ...(selectedTimes.length < pkg.lessons ? {opacity: 0.5} : {})}}
+          onClick={() => selectedTimes.length >= pkg.lessons && setSelectedPkg(key)}
         >
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
             <span style={{fontWeight: 'bold', fontSize: '18px'}}>{pkg.name}</span>
@@ -377,6 +379,9 @@ export default function BookingApp() {
           </div>
           <div style={{color: '#8b949e', fontSize: '14px'}}>
             {pkg.lessons} lesson{pkg.lessons > 1 ? 's' : ''} â€¢ {pkg.hours} hours
+            {selectedTimes.length < pkg.lessons && (
+              <span style={{color: '#da3633', marginLeft: '8px'}}>(Need {pkg.lessons - selectedTimes.length} more)</span>
+            )}
           </div>
         </div>
       ))}
