@@ -65,50 +65,55 @@ export default function Dashboard() {
   };
 
   const styles = {
-    container: { maxWidth: '1400px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui, sans-serif' },
-    header: { borderBottom: '2px solid #333', paddingBottom: '10px', marginBottom: '20px' },
+    container: { maxWidth: '1400px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
+    header: { borderBottom: '2px solid #30363d', paddingBottom: '10px', marginBottom: '20px' },
     board: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' },
-    column: { background: '#f5f5f5', padding: '15px', borderRadius: '8px', minHeight: '400px' },
-    columnTitle: { fontSize: '16px', fontWeight: 'bold', marginBottom: '15px', padding: '10px', background: '#333', color: 'white', borderRadius: '4px', textAlign: 'center' },
+    column: { background: '#161b22', padding: '15px', borderRadius: '8px', minHeight: '400px', border: '1px solid #30363d' },
+    columnTitle: { fontSize: '16px', fontWeight: 'bold', marginBottom: '15px', padding: '10px', background: '#21262d', color: '#c9d1d9', borderRadius: '4px', textAlign: 'center', border: '1px solid #30363d' },
     taskList: { listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' },
     taskCard: { 
-      background: 'white', 
+      background: '#0d1117', 
       padding: '12px', 
       borderRadius: '6px',
-      borderTop: '4px solid #0070f3',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      borderTop: '4px solid #58a6ff',
+      border: '1px solid #30363d',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
     },
-    completedCard: { borderTopColor: '#00c853' },
-    scheduledCard: { borderTopColor: '#ffab00' },
-    cardTitle: { fontWeight: 'bold', marginBottom: '5px', fontSize: '14px' },
-    cardMeta: { fontSize: '11px', color: '#666', marginBottom: '8px' },
+    completedCard: { borderTopColor: '#238636' },
+    scheduledCard: { borderTopColor: '#d29922' },
+    cardTitle: { fontWeight: 'bold', marginBottom: '5px', fontSize: '14px', color: '#c9d1d9' },
+    cardMeta: { fontSize: '11px', color: '#8b949e', marginBottom: '8px' },
     button: { 
       padding: '6px 12px', 
       border: 'none', 
       borderRadius: '4px', 
       cursor: 'pointer',
       fontSize: '11px',
-      marginRight: '5px'
+      marginRight: '5px',
+      fontWeight: 'bold'
     },
-    startBtn: { background: '#0070f3', color: 'white' },
-    completeBtn: { background: '#00c853', color: 'white' },
-    addSection: { background: '#f5f5f5', padding: '15px', borderRadius: '8px', marginBottom: '20px' },
+    startBtn: { background: '#1f6feb', color: 'white' },
+    completeBtn: { background: '#238636', color: 'white' },
+    addSection: { background: '#161b22', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #30363d' },
     input: { 
       padding: '10px', 
       width: '60%', 
-      border: '1px solid #ddd', 
+      border: '1px solid #30363d', 
       borderRadius: '4px',
-      marginRight: '10px'
+      marginRight: '10px',
+      background: '#0d1117',
+      color: '#c9d1d9'
     },
     submitBtn: { 
       padding: '10px 20px', 
-      background: '#0070f3', 
+      background: '#238636', 
       color: 'white', 
       border: 'none', 
       borderRadius: '4px',
-      cursor: 'pointer'
+      cursor: 'pointer',
+      fontWeight: 'bold'
     },
-    empty: { color: '#888', fontStyle: 'italic', padding: '20px', textAlign: 'center' }
+    empty: { color: '#8b949e', fontStyle: 'italic', padding: '20px', textAlign: 'center' }
   };
 
   return (
