@@ -139,6 +139,18 @@ export default function Dashboard() {
     }
   };
 
+  const deleteTask = async (id) => {
+    if (!confirm('Delete this task?')) return;
+    
+    const updatedTasks = {
+      ...tasks,
+      scheduled: tasks.scheduled.filter(t => t.id !== id)
+    };
+    
+    setTasks(updatedTasks);
+    localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
+  };
+
   const startTask = async (id) => {
     // Find task in scheduled
     const task = tasks.scheduled.find(t => t.id === id);
@@ -190,6 +202,7 @@ export default function Dashboard() {
     },
     startBtn: { background: '#1f6feb', color: 'white' },
     completeBtn: { background: '#238636', color: 'white' },
+    deleteBtn: { background: '#da3633', color: 'white' },
     addSection: { background: '#161b22', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #30363d' },
     input: { 
       padding: '10px', 
@@ -381,6 +394,12 @@ export default function Dashboard() {
                     style={{...styles.button, ...styles.startBtn}}
                   >
                     Start
+                  </button>
+                  <button 
+                    onClick={() => deleteTask(task.id)}
+                    style={{...styles.button, ...styles.deleteBtn}}
+                  >
+                    Delete
                   </button>
                 </li>
               ))}
