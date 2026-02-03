@@ -37,15 +37,44 @@ export default function Dashboard() {
     setPrevCompletedCount(tasks.completed.length);
     setLastUpdate(Date.now());
     
-    // Simulate Claw activity based on recent updates
+    // Check Claw activity based on recent task updates
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    let latestActivity = null;
+    
+    // Check completed tasks
     if (tasks.completed.length > 0) {
-      const latestCompleted = tasks.completed[tasks.completed.length - 1];
-      if (new Date(latestCompleted.completedAt).getTime() > fiveMinutesAgo) {
-        setClawStatus({ active: true, lastSeen: new Date() });
-      } else {
-        setClawStatus({ active: false, lastSeen: new Date(latestCompleted.completedAt) });
+      const latestCompleted = tasks.completed[0]; // Most recent first
+      if (latestCompleted.completedAt) {
+        const completedTime = new Date(latestCompleted.completedAt).getTime();
+        if (completedTime > fiveMinutesAgo) {
+          latestActivity = new Date(latestCompleted.completedAt);
+        }
       }
+    }
+    
+    // Check active tasks
+    if (tasks.active.length > 0) {
+      const latestActive = tasks.active[0];
+      if (latestActive.startedAt) {
+        const startedTime = new Date(latestActive.startedAt).getTime();
+        if (startedTime > fiveMinutesAgo && (!latestActivity || startedTime > latestActivity.getTime())) {
+          latestActivity = new Date(latestActive.startedAt);
+        }
+      }
+    }
+    
+    if (latestActivity) {
+      setClawStatus({ active: true, lastSeen: latestActivity });
+    } else {
+      // Find most recent activity ever
+      let mostRecent = null;
+      [...tasks.completed, ...tasks.active].forEach(task => {
+        const time = new Date(task.completedAt || task.startedAt || task.createdAt).getTime();
+        if (!mostRecent || time > mostRecent.getTime()) {
+          mostRecent = new Date(task.completedAt || task.startedAt || task.createdAt);
+        }
+      });
+      setClawStatus({ active: false, lastSeen: mostRecent });
     }
   }, [tasks]);
 
