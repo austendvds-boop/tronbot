@@ -67,28 +67,28 @@ export default function BookingV2() {
   };
 
   const styles = {
-    container: { maxWidth: '600px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
-    header: { textAlign: 'center', marginBottom: '30px' },
-    title: { fontSize: '28px', marginBottom: '5px' },
-    stepper: { display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' },
-    step: { width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' },
+    container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh', boxSizing: 'border-box' },
+    header: { textAlign: 'center', marginBottom: '24px', paddingTop: '10px' },
+    title: { fontSize: '24px', marginBottom: '4px', fontWeight: '700' },
+    stepper: { display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '24px' },
+    step: { width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '16px' },
     stepActive: { background: '#238636', color: 'white' },
     stepInactive: { background: '#30363d', color: '#8b949e' },
-    card: { background: '#161b22', padding: '20px', borderRadius: '8px', border: '1px solid #30363d', marginBottom: '20px' },
-    input: { width: '100%', padding: '12px', border: '1px solid #30363d', borderRadius: '6px', background: '#0d1117', color: '#c9d1d9', fontSize: '16px', marginBottom: '12px', boxSizing: 'border-box' },
-    button: { padding: '14px 24px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%' },
+    card: { background: '#161b22', padding: '20px', borderRadius: '12px', border: '1px solid #30363d', marginBottom: '16px' },
+    input: { width: '100%', padding: '16px', border: '1px solid #30363d', borderRadius: '10px', background: '#0d1117', color: '#c9d1d9', fontSize: '17px', marginBottom: '16px', boxSizing: 'border-box', minHeight: '52px' },
+    button: { padding: '18px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', width: '100%', minHeight: '56px', touchAction: 'manipulation' },
     primary: { background: '#238636', color: 'white' },
     secondary: { background: '#1f6feb', color: 'white' },
-    locationCard: { background: '#0d1117', padding: '20px', borderRadius: '8px', border: '2px solid #30363d', marginBottom: '20px' },
-    locationName: { fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' },
-    price: { fontSize: '32px', fontWeight: 'bold', color: '#58a6ff' },
-    instructor: { color: '#8b949e', marginTop: '5px' },
-    zoneBadge: { display: 'inline-block', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '10px' },
+    locationCard: { background: '#0d1117', padding: '24px', borderRadius: '12px', border: '2px solid #30363d', marginBottom: '20px', textAlign: 'center' },
+    locationName: { fontSize: '26px', fontWeight: 'bold', marginBottom: '12px' },
+    price: { fontSize: '36px', fontWeight: 'bold', color: '#58a6ff', margin: '16px 0' },
+    instructor: { color: '#8b949e', marginTop: '8px', fontSize: '16px' },
+    zoneBadge: { display: 'inline-block', padding: '8px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold', marginBottom: '16px' },
     austenBadge: { background: '#1f6feb', color: 'white' },
     dadBadge: { background: '#d29922', color: 'black' },
-    package: { background: '#0d1117', padding: '15px', borderRadius: '6px', border: '2px solid #30363d', marginBottom: '12px', cursor: 'pointer' },
-    pkgSelected: { borderColor: '#238636' },
-    back: { color: '#58a6ff', textDecoration: 'none', display: 'inline-block', marginBottom: '15px', cursor: 'pointer' }
+    package: { background: '#0d1117', padding: '20px', borderRadius: '12px', border: '2px solid #30363d', marginBottom: '16px', cursor: 'pointer', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+    pkgSelected: { borderColor: '#238636', background: '#1f2937' },
+    back: { color: '#58a6ff', textDecoration: 'none', display: 'inline-block', marginBottom: '20px', cursor: 'pointer', fontSize: '16px', padding: '8px 0' }
   };
 
   const renderStep1 = () => (
@@ -222,7 +222,11 @@ export default function BookingV2() {
     <div style={styles.container}>
       <Head>
         <title>Book Driving Lessons | Deer Valley Driving School</title>
-        <style>{`body{margin:0;background:#0d1117;color:#c9d1d9}`}</style>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <style>{`
+          body{margin:0;background:#0d1117;color:#c9d1d9;-webkit-tap-highlight-color:transparent}
+          *{box-sizing:border-box}
+        `}</style>
       </Head>
       
       <header style={styles.header}>
