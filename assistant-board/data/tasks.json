@@ -42,6 +42,14 @@
       "schedule": "Tomorrow",
       "type": "test",
       "status": "scheduled"
+    },
+    {
+      "id": "task-4",
+      "title": "Build unified booking app with smart routing",
+      "schedule": "Next week",
+      "type": "feature",
+      "status": "scheduled",
+      "details": "One app, two Acuity accounts. Customer enters address, app routes to correct zone (Austen vs Dad). Mobile-first, uses existing packages."
     }
   ],
   "completed": []
