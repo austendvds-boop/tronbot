@@ -69,7 +69,7 @@ export default function Dashboard() {
     header: { borderBottom: '2px solid #30363d', paddingBottom: '10px', marginBottom: '20px' },
     board: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' },
     column: { background: '#161b22', padding: '15px', borderRadius: '8px', minHeight: '400px', border: '1px solid #30363d' },
-    columnTitle: { fontSize: '16px', fontWeight: 'bold', marginBottom: '15px', padding: '10px', background: '#21262d', color: '#c9d1d9', borderRadius: '4px', textAlign: 'center', border: '1px solid #30363d' },
+    columnTitle: { fontSize: '16px', fontWeight: 'bold', marginBottom: '15px', padding: '10px', background: '#21262d', color: '#c9d1d9', borderRadius: '4px', textAlign: 'center', border: '1px solid #30363d', fontFamily: 'system-ui, -apple-system, sans-serif' },
     taskList: { listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' },
     taskCard: { 
       background: '#0d1117', 
