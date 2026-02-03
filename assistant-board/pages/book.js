@@ -116,46 +116,52 @@ export default function Booking() {
   }
 
   if (step === 3) {
-    // Check if time can be selected (1 lesson per week rule)
-    const canSelectTime = (index) => {
-      if (times.includes(index)) return true; // Can always deselect
-      if (times.length >= pkg.lessons) return false; // Max lessons reached
-      
-      // Check 7-day restriction
-      const selectedDate = new Date(mockTimes[index].date);
-      for (const selectedIndex of times) {
-        const existingDate = new Date(mockTimes[selectedIndex].date);
-        const diffDays = Math.abs((selectedDate - existingDate) / (1000 * 60 * 60 * 24));
-        if (diffDays < 7) return false; // Too close to existing lesson
+    // Check if multiple lessons per week selected
+    const hasMultiplePerWeek = () => {
+      for (let i = 0; i < times.length; i++) {
+        for (let j = i + 1; j < times.length; j++) {
+          const date1 = new Date(mockTimes[times[i]].date);
+          const date2 = new Date(mockTimes[times[j]].date);
+          const diffDays = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
+          if (diffDays < 7) return true;
+        }
       }
-      return true;
+      return false;
     };
+
+    const violation = hasMultiplePerWeek();
 
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
         <div style={styles.header}>
           <h1 style={styles.title}>Select {pkg.lessons} Times</h1>
-          <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week minimum</p>
+          <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week recommended</p>
         </div>
         <div style={styles.card}>
+          {violation && (
+            <div style={{background: '#da3633', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>
+              <strong>âš ï¸ Multiple Lessons Per Week</strong>
+              <p style={{margin: '4px 0 0 0', fontSize: '14px'}}>
+                You've selected lessons less than 7 days apart. 
+                An additional $50 surcharge will apply.
+              </p>
+            </div>
+          )}
           <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
             {mockTimes.map((t, i) => {
               const isSelected = times.includes(i);
-              const canSelect = canSelectTime(i);
               return (
                 <button 
                   key={i} 
                   style={{
                     ...styles.timeBtn, 
-                    ...(isSelected && styles.timeSelected),
-                    ...(!canSelect && !isSelected && {opacity: 0.3, cursor: 'not-allowed'})
+                    ...(isSelected && styles.timeSelected)
                   }} 
                   onClick={() => {
                     if (isSelected) setTimes(times.filter(x => x !== i));
-                    else if (canSelect) setTimes([...times, i]);
+                    else if (times.length < pkg.lessons) setTimes([...times, i]);
                   }}
-                  disabled={!canSelect && !isSelected}
                 >
                   {t.date.slice(5)} {t.time}
                 </button>
@@ -190,16 +196,39 @@ export default function Booking() {
   }
 
   // Step 5: Review & Pay
+  // Check for multiple per week violation
+  const hasViolation = () => {
+    for (let i = 0; i < times.length; i++) {
+      for (let j = i + 1; j < times.length; j++) {
+        const date1 = new Date(mockTimes[times[i]].date);
+        const date2 = new Date(mockTimes[times[j]].date);
+        const diffDays = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
+        if (diffDays < 7) return true;
+      }
+    }
+    return false;
+  };
+
+  const violation = hasViolation();
+  const surcharge = violation ? 50 : 0;
+  const totalPrice = pkg.price + surcharge;
+
   return (
     <div style={styles.container}>
       <Head><title>Book | DVDS</title></Head>
       <div style={styles.header}><h1 style={styles.title}>Complete Booking</h1></div>
       <div style={styles.card}>
         <p><strong>{location.name}</strong> â€¢ {pkg.name}</p>
-        <p style={styles.price}>${pkg.price}</p>
+        <p style={styles.price}>${totalPrice}</p>
+        {violation && (
+          <div style={{background: '#da3633', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px'}}>
+            <strong>âš ï¸ Multiple Lessons Per Week Surcharge: +$50</strong>
+            <p style={{margin: '4px 0 0 0'}}>Base: ${pkg.price} + Surcharge: $50 = ${totalPrice}</p>
+          </div>
+        )}
         <p>{times.length} lessons selected</p>
-        <button style={styles.button} onClick={() => alert(`DEMO: Paid $${pkg.price}! Confirmation: DVDS-${Math.random().toString(36).substr(2,8).toUpperCase()}`)}>
-          Pay ${pkg.price} â†’
+        <button style={styles.button} onClick={() => alert(`DEMO: Paid $${totalPrice}! Confirmation: DVDS-${Math.random().toString(36).substr(2,8).toUpperCase()}`)}>
+          Pay ${totalPrice} â†’
         </button>
       </div>
     </div>
