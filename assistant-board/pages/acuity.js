@@ -10,14 +10,89 @@ export default function AcuityDashboard() {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [notification, setNotification] = useState(null);
+
+  // Mock student history database
+  const studentHistory = {
+    'Will Weng': {
+      package: '4 Lesson Package',
+      completed: [
+        { date: '2026-01-15', time: '9:00am', instructor: 'Aaron', location: 'Tempe', lessonNum: 1, notes: 'Basic controls, parking' },
+        { date: '2026-01-22', time: '10:00am', instructor: 'Aaron', location: 'Tempe', lessonNum: 2, notes: 'City driving, intersections' }
+      ],
+      upcoming: [
+        { date: '2026-02-03', time: '8:30am', instructor: 'Aaron', location: 'Tempe', lessonNum: 3 }
+      ],
+      remaining: 1
+    },
+    'Demarious Johnson': {
+      package: '4 Lesson Package',
+      completed: [
+        { date: '2026-01-20', time: '8:30am', instructor: 'Ryan', location: 'Gilbert', lessonNum: 1, notes: 'Intro, neighborhood driving' },
+        { date: '2026-01-27', time: '8:30am', instructor: 'Ryan', location: 'Gilbert', lessonNum: 2, notes: 'Highway merge, lane changes' }
+      ],
+      upcoming: [
+        { date: '2026-02-03', time: '8:30am', instructor: 'Ryan', location: 'Gilbert', lessonNum: 3 }
+      ],
+      remaining: 1
+    },
+    'Enzo Cascio': {
+      package: '4 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '2:30pm', instructor: 'Ryan', location: 'Scottsdale', lessonNum: 1 }
+      ],
+      remaining: 3
+    },
+    'Alexis Hayes': {
+      package: 'Single Lesson',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '2:30pm', instructor: 'Austen', location: 'Greenway', lessonNum: 1 }
+      ],
+      remaining: 0
+    },
+    'Thomas Chutes': {
+      package: '4 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '2:30pm', instructor: 'Aaron', location: 'Gilbert', lessonNum: 1 }
+      ],
+      remaining: 3
+    },
+    'Keaton Huls': {
+      package: '2 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '5:30pm', instructor: 'Ryan', location: 'Downtown Phoenix', lessonNum: 1 }
+      ],
+      remaining: 1
+    },
+    'Lily Vaughan': {
+      package: 'Unknown',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '5:30pm', instructor: 'Aaron', location: 'Gilbert', lessonNum: 1 }
+      ],
+      remaining: '?'
+    },
+    'Brayden Miller': {
+      package: '4 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-04', time: '2:30pm', instructor: 'Ernie', location: 'Peoria', lessonNum: 1 }
+      ],
+      remaining: 3
+    }
+  };
 
   useEffect(() => {
     fetchCombinedSchedule();
   }, []);
 
   useEffect(() => {
-    // Filter schedule based on search
     if (searchQuery) {
       const filtered = {
         austen: schedule.austen.filter(l => 
@@ -39,11 +114,10 @@ export default function AcuityDashboard() {
 
   const fetchCombinedSchedule = async () => {
     try {
-      // This would fetch from both Acuity accounts via API
       const mockData = {
         austen: [
-          { id: '1', student: 'Will Weng', time: '8:30am', instructor: 'Aaron', lesson: '2 of 4', location: 'Tempe', date: '2026-02-03' },
-          { id: '2', student: 'Demarious Johnson', time: '8:30am', instructor: 'Ryan', lesson: '2 of 4', location: 'Gilbert', date: '2026-02-03' },
+          { id: '1', student: 'Will Weng', time: '8:30am', instructor: 'Aaron', lesson: '3 of 4', location: 'Tempe', date: '2026-02-03' },
+          { id: '2', student: 'Demarious Johnson', time: '8:30am', instructor: 'Ryan', lesson: '3 of 4', location: 'Gilbert', date: '2026-02-03' },
           { id: '3', student: 'Enzo Cascio', time: '2:30pm', instructor: 'Ryan', lesson: '1 of 4', location: 'Scottsdale', date: '2026-02-03' },
           { id: '4', student: 'Alexis Hayes', time: '2:30pm', instructor: 'Austen', lesson: 'Single', location: 'Greenway', date: '2026-02-03' },
           { id: '5', student: 'Thomas Chutes', time: '2:30pm', instructor: 'Aaron', lesson: '1 of 4', location: 'Gilbert', date: '2026-02-03' },
@@ -68,11 +142,14 @@ export default function AcuityDashboard() {
     setShowRescheduleModal(true);
   };
 
+  const handleViewHistory = (studentName) => {
+    setSelectedStudent(studentName);
+    setShowHistoryModal(true);
+  };
+
   const confirmReschedule = async (newTime) => {
-    // This would call Acuity API to reschedule
     setNotification(`Rescheduling ${selectedLesson.student} to ${newTime}...`);
     
-    // Notify Claw
     await fetch('/api/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -91,7 +168,6 @@ export default function AcuityDashboard() {
   const handleScheduleNew = async (lessonData) => {
     setNotification(`Scheduling new lesson for ${lessonData.student}...`);
     
-    // Notify Claw
     await fetch('/api/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -141,13 +217,12 @@ export default function AcuityDashboard() {
       borderRadius: '6px',
       borderLeft: '4px solid #238636',
       border: '1px solid #30363d',
-      cursor: 'pointer',
       transition: 'all 0.2s'
     },
-    lessonCardHover: { background: '#1f242c' },
     austenCard: { borderLeftColor: '#58a6ff' },
     dadCard: { borderLeftColor: '#d29922' },
-    studentName: { fontWeight: 'bold', fontSize: '14px', marginBottom: '4px' },
+    studentName: { fontWeight: 'bold', fontSize: '14px', marginBottom: '4px', cursor: 'pointer' },
+    studentNameHover: { color: '#58a6ff' },
     lessonInfo: { fontSize: '12px', color: '#8b949e', marginBottom: '2px' },
     actionButtons: { display: 'flex', gap: '8px', marginTop: '8px' },
     smallBtn: { 
@@ -158,6 +233,19 @@ export default function AcuityDashboard() {
       fontSize: '11px'
     },
     rescheduleBtn: { background: '#d29922', color: 'black' },
+    historyBtn: { background: '#1f6feb', color: 'white' },
+    progressBar: { 
+      height: '4px', 
+      background: '#30363d', 
+      borderRadius: '2px', 
+      marginTop: '6px',
+      overflow: 'hidden'
+    },
+    progressFill: { 
+      height: '100%', 
+      background: '#238636', 
+      borderRadius: '2px'
+    },
     summary: { 
       display: 'flex', 
       gap: '20px', 
@@ -187,10 +275,31 @@ export default function AcuityDashboard() {
       padding: '24px',
       borderRadius: '8px',
       border: '1px solid #30363d',
-      maxWidth: '500px',
-      width: '90%'
+      maxWidth: '600px',
+      width: '90%',
+      maxHeight: '80vh',
+      overflow: 'auto'
     },
     modalTitle: { fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' },
+    historySection: { marginBottom: '20px' },
+    historyTitle: { fontSize: '14px', fontWeight: 'bold', color: '#8b949e', marginBottom: '10px', textTransform: 'uppercase' },
+    historyItem: {
+      background: '#0d1117',
+      padding: '10px',
+      borderRadius: '4px',
+      marginBottom: '8px',
+      border: '1px solid #30363d'
+    },
+    historyDate: { fontWeight: 'bold', fontSize: '13px' },
+    historyDetails: { fontSize: '12px', color: '#8b949e', marginTop: '4px' },
+    historyNotes: { fontSize: '11px', color: '#58a6ff', marginTop: '4px', fontStyle: 'italic' },
+    packageInfo: {
+      background: '#21262d',
+      padding: '12px',
+      borderRadius: '6px',
+      marginBottom: '16px',
+      border: '1px solid #30363d'
+    },
     input: {
       width: '100%',
       padding: '10px',
@@ -215,6 +324,53 @@ export default function AcuityDashboard() {
 
   const totalLessons = filteredSchedule.austen.length + filteredSchedule.dad.length;
 
+  const renderLessonCard = (lesson, accountType) => {
+    const history = studentHistory[lesson.student];
+    const completedCount = history?.completed?.length || 0;
+    const totalLessons = history?.package?.includes('4') ? 4 : history?.package?.includes('2') ? 2 : history?.package?.includes('Single') ? 1 : 4;
+    const progressPercent = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
+
+    return (
+      <li key={lesson.id} style={{...styles.lessonCard, ...(accountType === 'austen' ? styles.austenCard : styles.dadCard)}}>
+        <div 
+          style={styles.studentName}
+          onClick={() => handleViewHistory(lesson.student)}
+        >
+          {lesson.student}
+        </div>
+        <div style={styles.lessonInfo}>{lesson.date} at {lesson.time} | {lesson.location}</div>
+        <div style={styles.lessonInfo}>
+          Lesson {lesson.lesson} | Instructor: {lesson.instructor}
+          {history && (
+            <span> | Package: {history.package}</span>
+          )}
+        </div>
+        
+        {/* Progress bar */}
+        {history && (
+          <div style={styles.progressBar}>
+            <div style={{...styles.progressFill, width: `${progressPercent}%`}}></div>
+          </div>
+        )}
+        
+        <div style={styles.actionButtons}>
+          <button 
+            onClick={() => handleViewHistory(lesson.student)}
+            style={{...styles.smallBtn, ...styles.historyBtn}}
+          >
+            View History
+          </button>
+          <button 
+            onClick={() => handleReschedule(lesson)}
+            style={{...styles.smallBtn, ...styles.rescheduleBtn}}
+          >
+            Reschedule
+          </button>
+        </div>
+      </li>
+    );
+  };
+
   return (
     <div style={styles.container}>
       <Head>
@@ -226,7 +382,7 @@ export default function AcuityDashboard() {
       
       <header style={styles.header}>
         <h1>Combined Acuity Dashboard</h1>
-        <p>View, search, reschedule, and schedule lessons</p>
+        <p>View schedules, lesson history, reschedule, and book new lessons</p>
       </header>
 
       {/* Controls */}
@@ -276,21 +432,7 @@ export default function AcuityDashboard() {
             <div style={styles.empty}>No lessons found</div>
           ) : (
             <ul style={styles.lessonList}>
-              {filteredSchedule.austen.map((lesson) => (
-                <li key={lesson.id} style={{...styles.lessonCard, ...styles.austenCard}}>
-                  <div style={styles.studentName}>{lesson.student}</div>
-                  <div style={styles.lessonInfo}>{lesson.date} at {lesson.time} | {lesson.location}</div>
-                  <div style={styles.lessonInfo}>Lesson {lesson.lesson} | Instructor: {lesson.instructor}</div>
-                  <div style={styles.actionButtons}>
-                    <button 
-                      onClick={() => handleReschedule(lesson)}
-                      style={{...styles.smallBtn, ...styles.rescheduleBtn}}
-                    >
-                      Reschedule
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {filteredSchedule.austen.map((lesson) => renderLessonCard(lesson, 'austen'))}
             </ul>
           )}
         </div>
@@ -302,25 +444,73 @@ export default function AcuityDashboard() {
             <div style={styles.empty}>No lessons found</div>
           ) : (
             <ul style={styles.lessonList}>
-              {filteredSchedule.dad.map((lesson) => (
-                <li key={lesson.id} style={{...styles.lessonCard, ...styles.dadCard}}>
-                  <div style={styles.studentName}>{lesson.student}</div>
-                  <div style={styles.lessonInfo}>{lesson.date} at {lesson.time} | {lesson.location}</div>
-                  <div style={styles.lessonInfo}>Lesson {lesson.lesson} | Instructor: {lesson.instructor}</div>
-                  <div style={styles.actionButtons}>
-                    <button 
-                      onClick={() => handleReschedule(lesson)}
-                      style={{...styles.smallBtn, ...styles.rescheduleBtn}}
-                    >
-                      Reschedule
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {filteredSchedule.dad.map((lesson) => renderLessonCard(lesson, 'dad'))}
             </ul>
           )}
         </div>
       </div>
+
+      {/* History Modal */}
+      {showHistoryModal && selectedStudent && studentHistory[selectedStudent] && (
+        <div style={styles.modal} onClick={() => setShowHistoryModal(false)}>
+          <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <h3 style={styles.modalTitle}>{selectedStudent} - Lesson History</h3>
+            
+            {/* Package Info */}
+            <div style={styles.packageInfo}>
+              <strong>Package:</strong> {studentHistory[selectedStudent].package}<br/>
+              <strong>Completed:</strong> {studentHistory[selectedStudent].completed.length} lessons<br/>
+              <strong>Remaining:</strong> {studentHistory[selectedStudent].remaining} lessons
+            </div>
+
+            {/* Completed Lessons */}
+            {studentHistory[selectedStudent].completed.length > 0 && (
+              <div style={styles.historySection}>
+                <div style={styles.historyTitle}>Completed Lessons</div>
+                {studentHistory[selectedStudent].completed.map((lesson, idx) => (
+                  <div key={idx} style={styles.historyItem}>
+                    <div style={styles.historyDate}>
+                      Lesson {lesson.lessonNum}: {lesson.date} at {lesson.time}
+                    </div>
+                    <div style={styles.historyDetails}>
+                      Instructor: {lesson.instructor} | Location: {lesson.location}
+                    </div>
+                    {lesson.notes && (
+                      <div style={styles.historyNotes}>Notes: {lesson.notes}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upcoming Lessons */}
+            {studentHistory[selectedStudent].upcoming.length > 0 && (
+              <div style={styles.historySection}>
+                <div style={styles.historyTitle}>Upcoming</div>
+                {studentHistory[selectedStudent].upcoming.map((lesson, idx) => (
+                  <div key={idx} style={{...styles.historyItem, borderColor: '#238636'}}>
+                    <div style={styles.historyDate}>
+                      Lesson {lesson.lessonNum}: {lesson.date} at {lesson.time}
+                    </div>
+                    <div style={styles.historyDetails}>
+                      Instructor: {lesson.instructor} | Location: {lesson.location}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+              <button 
+                onClick={() => setShowHistoryModal(false)}
+                style={{...styles.button, background: '#30363d', color: 'white'}}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reschedule Modal */}
       {showRescheduleModal && selectedLesson && (
@@ -379,6 +569,10 @@ export default function AcuityDashboard() {
               <option value="Ryan">Ryan</option>
               <option value="Ernie">Ernie</option>
               <option value="Michelle">Michelle</option>
+              <option value="Allan">Allan</option>
+              <option value="Bob">Bob</option>
+              <option value="Brandon">Brandon</option>
+              <option value="Freddy">Freddy</option>
             </select>
             <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
               <button 
