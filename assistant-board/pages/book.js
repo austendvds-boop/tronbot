@@ -1,35 +1,35 @@
 import { useState } from 'react';
 import Head from 'next/head';
 
-// Real packages from Acuity - location specific
+// Real packages from Acuity - location specific with package pricing
 const locationPackages = {
   // Austen's locations
-  ahwatukee: { account: 'austen', name: 'Ahwatukee', price: 170, instructor: 'Aaron', zone: 'East Valley' },
-  anthem: { account: 'austen', name: 'Anthem', price: 170, instructor: 'Austen', zone: 'North', dual: true }, // Both serve
-  apacheJunction: { account: 'austen', name: 'Apache Junction', price: 170, instructor: 'Ryan', zone: 'East Valley' },
-  caveCreek: { account: 'austen', name: 'Cave Creek', price: 170, instructor: 'Austen', zone: 'North', dual: true },
-  chandler: { account: 'austen', name: 'Chandler', price: 170, instructor: 'Aaron/Ryan', zone: 'East Valley' },
-  downtownPhoenix: { account: 'austen', name: 'Downtown Phoenix', price: 170, instructor: 'Austen', zone: 'Central' },
-  flagstaff: { account: 'austen', name: 'Flagstaff/Sedona/Cottonwood', price: 0, instructor: 'Austen', zone: 'North', note: 'Contact for pricing' },
-  gilbert: { account: 'austen', name: 'Gilbert', price: 170, instructor: 'Aaron/Ryan', zone: 'East Valley' },
-  mesa: { account: 'austen', name: 'Mesa', price: 170, instructor: 'Aaron/Ryan', zone: 'East Valley' },
-  northPhoenix: { account: 'austen', name: 'North Phoenix', price: 170, instructor: 'Austen', zone: 'North', dual: true },
-  queenCreek: { account: 'austen', name: 'Queen Creek', price: 170, instructor: 'Ryan', zone: 'East Valley' },
-  sanTanValley: { account: 'austen', name: 'San Tan Valley', price: 170, instructor: 'Ryan', zone: 'East Valley' },
-  scottsdale: { account: 'austen', name: 'Scottsdale', price: 170, instructor: 'Austen', zone: 'East Valley', dual: true },
-  tempe: { account: 'austen', name: 'Tempe', price: 170, instructor: 'Austen', zone: 'East Valley' },
-  westValley: { account: 'austen', name: 'West Valley', price: 340, instructor: 'Austen', zone: 'West', note: '5-hour lessons' },
+  ahwatukee: { account: 'austen', name: 'Ahwatukee', lessonPrice: 170, instructor: 'Aaron', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  anthem: { account: 'austen', name: 'Anthem', lessonPrice: 170, instructor: 'Austen', zone: 'North', dual: true, earlyBirdPrice: 324.50 },
+  apacheJunction: { account: 'austen', name: 'Apache Junction', lessonPrice: 170, instructor: 'Ryan', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  caveCreek: { account: 'austen', name: 'Cave Creek', lessonPrice: 170, instructor: 'Austen', zone: 'North', dual: true, earlyBirdPrice: 324.50 },
+  chandler: { account: 'austen', name: 'Chandler', lessonPrice: 170, instructor: 'Aaron/Ryan', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  downtownPhoenix: { account: 'austen', name: 'Downtown Phoenix', lessonPrice: 170, instructor: 'Austen', zone: 'Central', earlyBirdPrice: 324.50 },
+  flagstaff: { account: 'austen', name: 'Flagstaff/Sedona/Cottonwood', lessonPrice: 0, instructor: 'Austen', zone: 'North', note: 'Contact for pricing' },
+  gilbert: { account: 'austen', name: 'Gilbert', lessonPrice: 170, instructor: 'Aaron/Ryan', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  mesa: { account: 'austen', name: 'Mesa', lessonPrice: 170, instructor: 'Aaron/Ryan', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  northPhoenix: { account: 'austen', name: 'North Phoenix', lessonPrice: 170, instructor: 'Austen', zone: 'North', dual: true, earlyBirdPrice: 324.50 },
+  queenCreek: { account: 'austen', name: 'Queen Creek', lessonPrice: 170, instructor: 'Ryan', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  sanTanValley: { account: 'austen', name: 'San Tan Valley', lessonPrice: 170, instructor: 'Ryan', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  scottsdale: { account: 'austen', name: 'Scottsdale', lessonPrice: 170, instructor: 'Austen', zone: 'East Valley', dual: true, earlyBirdPrice: 324.50 },
+  tempe: { account: 'austen', name: 'Tempe', lessonPrice: 170, instructor: 'Austen', zone: 'East Valley', earlyBirdPrice: 324.50 },
+  westValley: { account: 'austen', name: 'West Valley', lessonPrice: 340, instructor: 'Austen', zone: 'West', note: '5-hour lessons', is5Hour: true },
   
   // Dad's locations
-  avondale: { account: 'dad', name: 'Avondale', price: 187.25, instructor: 'Ernie/Michelle', zone: 'West Valley' },
-  buckeye: { account: 'dad', name: 'Buckeye', price: 187.25, instructor: 'Ernie/Allan', zone: 'West Valley' },
-  elMirage: { account: 'dad', name: 'El Mirage', price: 170, instructor: 'Bob/Brandon', zone: 'West Valley' },
-  glendale: { account: 'dad', name: 'Glendale', price: 170, instructor: 'Ernie/Michelle', zone: 'West Valley' },
-  goodyear: { account: 'dad', name: 'Goodyear', price: 187.25, instructor: 'Allan/Bob', zone: 'West Valley' },
-  peoria: { account: 'dad', name: 'Peoria', price: 170, instructor: 'Ernie/Freddy', zone: 'West Valley' },
-  sunCity: { account: 'dad', name: 'Sun City', price: 170, instructor: 'Bob/Brandon', zone: 'West Valley' },
-  surprise: { account: 'dad', name: 'Surprise', price: 170, instructor: 'Allan/Freddy', zone: 'West Valley' },
-  tolleson: { account: 'dad', name: 'Tolleson', price: 187.25, instructor: 'Brandon/Freddy', zone: 'West Valley' }
+  avondale: { account: 'dad', name: 'Avondale', lessonPrice: 187.25, instructor: 'Ernie/Michelle', zone: 'West Valley' },
+  buckeye: { account: 'dad', name: 'Buckeye', lessonPrice: 187.25, instructor: 'Ernie/Allan', zone: 'West Valley' },
+  elMirage: { account: 'dad', name: 'El Mirage', lessonPrice: 170, instructor: 'Bob/Brandon', zone: 'West Valley' },
+  glendale: { account: 'dad', name: 'Glendale', lessonPrice: 170, instructor: 'Ernie/Michelle', zone: 'West Valley' },
+  goodyear: { account: 'dad', name: 'Goodyear', lessonPrice: 187.25, instructor: 'Allan/Bob', zone: 'West Valley' },
+  peoria: { account: 'dad', name: 'Peoria', lessonPrice: 170, instructor: 'Ernie/Freddy', zone: 'West Valley' },
+  sunCity: { account: 'dad', name: 'Sun City', lessonPrice: 170, instructor: 'Bob/Brandon', zone: 'West Valley' },
+  surprise: { account: 'dad', name: 'Surprise', lessonPrice: 170, instructor: 'Allan/Freddy', zone: 'West Valley' },
+  tolleson: { account: 'dad', name: 'Tolleson', lessonPrice: 187.25, instructor: 'Brandon/Freddy', zone: 'West Valley' }
 };
 
 // City to location key mapping
@@ -146,77 +146,133 @@ export default function BookingV2() {
     </div>
   );
 
-  const renderStep3 = () => (
-    <div style={styles.card}>
-      <a style={styles.back} onClick={() => setStep(2)}>â† Back</a>
-      <h2>Select Package</h2>
-      
-      {!detectedLoc.note && (
-        <>
-          <div style={{...styles.package, ...(selectedPkg === 'four' && styles.pkgSelected)}} onClick={() => setSelectedPkg('four')}>
-            <div style={{fontWeight: 'bold', fontSize: '18px'}}>4 Lesson Package</div>
-            <div style={styles.price}>${detectedLoc.price * 4}</div>
-            <div style={{color: '#8b949e'}}>Four 2.5-hour lessons. Most popular.</div>
+  const renderStep3 = () => {
+    const price = detectedLoc.lessonPrice;
+    const hasEarlyBird = detectedLoc.earlyBirdPrice && !detectedLoc.is5Hour;
+    
+    return (
+      <div style={styles.card}>
+        <a style={styles.back} onClick={() => setStep(2)}>â† Back</a>
+        <h2>Select Package</h2>
+        
+        {detectedLoc.note ? (
+          <div style={{...styles.package, ...(selectedPkg === 'contact' && styles.pkgSelected)}} onClick={() => setSelectedPkg('contact')}>
+            <div style={{fontWeight: 'bold', fontSize: '18px'}}>Contact for Pricing</div>
+            <div style={{color: '#8b949e'}}>Special pricing for this location. We'll reach out.</div>
           </div>
-          
-          <div style={{...styles.package, ...(selectedPkg === 'single' && styles.pkgSelected)}} onClick={() => setSelectedPkg('single')}>
-            <div style={{fontWeight: 'bold', fontSize: '18px'}}>Single Lesson</div>
-            <div style={styles.price}>${detectedLoc.price}</div>
-            <div style={{color: '#8b949e'}}>One 2.5-hour lesson. Great for refreshers.</div>
-          </div>
-        </>
-      )}
-      
-      <div style={{...styles.package, ...(selectedPkg === 'contact' && styles.pkgSelected)}} onClick={() => setSelectedPkg('contact')}>
-        <div style={{fontWeight: 'bold', fontSize: '18px'}}>Contact for Pricing</div>
-        <div style={{color: '#8b949e'}}>Special pricing for this location. We'll reach out.</div>
-      </div>
-      
-      {selectedPkg && (
-        <button style={{...styles.button, ...styles.primary, marginTop: '10px'}} onClick={() => setStep(4)}>
-          Continue to Availability â†’
-        </button>
-      )}
-    </div>
-  );
-
-  const renderStep4 = () => (
-    <div style={styles.card}>
-      <a style={styles.back} onClick={() => setStep(3)}>â† Back</a>
-      <h2>Complete Booking</h2>
-      
-      <div style={{background: '#21262d', padding: '15px', borderRadius: '6px', marginBottom: '20px'}}>
-        <div><strong>Location:</strong> {detectedLoc.name}</div>
-        <div><strong>Instructor:</strong> {detectedLoc.instructor}</div>
-        <div><strong>Package:</strong> {selectedPkg === 'four' ? '4 Lesson Package' : selectedPkg === 'single' ? 'Single Lesson' : 'Contact for Pricing'}</div>
-        {selectedPkg !== 'contact' && (
-          <div style={{...styles.price, marginTop: '10px'}}>
-            ${selectedPkg === 'four' ? detectedLoc.price * 4 : detectedLoc.price}
-          </div>
+        ) : detectedLoc.is5Hour ? (
+          // West Valley 5-hour special
+          <>
+            <div style={{...styles.package, ...(selectedPkg === 'westvalley' && styles.pkgSelected)}} onClick={() => setSelectedPkg('westvalley')}>
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>West Valley 5-Hour Lessons</div>
+              <div style={styles.price}>${price}</div>
+              <div style={{color: '#8b949e'}}>One 5-hour lesson</div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Ultimate Package - 8 lessons */}
+            <div style={{...styles.package, ...(selectedPkg === 'ultimate' && styles.pkgSelected)}} onClick={() => setSelectedPkg('ultimate')}>
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>Ultimate Package</div>
+              <div style={styles.price}>${(price * 8).toFixed(2)}</div>
+              <div style={{color: '#8b949e'}}>8 lessons (20 hours total) - Best value</div>
+            </div>
+            
+            {/* License Ready - 4 lessons */}
+            <div style={{...styles.package, ...(selectedPkg === 'license' && styles.pkgSelected)}} onClick={() => setSelectedPkg('license')}>
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>License Ready Package â­</div>
+              <div style={styles.price}>${(price * 4).toFixed(2)}</div>
+              <div style={{color: '#8b949e'}}>4 lessons (10 hours) - Most popular</div>
+            </div>
+            
+            {/* Early Bird - 2 lessons (5 hours) */}
+            {hasEarlyBird && (
+              <div style={{...styles.package, ...(selectedPkg === 'earlybird' && styles.pkgSelected)}} onClick={() => setSelectedPkg('earlybird')}>
+                <div style={{fontWeight: 'bold', fontSize: '18px'}}>Early Bird Special ðŸŒ…</div>
+                <div style={styles.price}>${detectedLoc.earlyBirdPrice.toFixed(2)}</div>
+                <div style={{color: '#8b949e'}}>2 lessons (5 hours) - Mornings only (Mon-Fri)</div>
+              </div>
+            )}
+            
+            {/* Intro to Driving - 2 lessons */}
+            <div style={{...styles.package, ...(selectedPkg === 'intro' && styles.pkgSelected)}} onClick={() => setSelectedPkg('intro')}>
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>Intro to Driving</div>
+              <div style={styles.price}>${(price * 2).toFixed(2)}</div>
+              <div style={{color: '#8b949e'}}>2 lessons (5 hours) - Get started</div>
+            </div>
+            
+            {/* Express - 1 lesson */}
+            <div style={{...styles.package, ...(selectedPkg === 'express' && styles.pkgSelected)}} onClick={() => setSelectedPkg('express')}>
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>Express Lesson</div>
+              <div style={styles.price}>${price.toFixed(2)}</div>
+              <div style={{color: '#8b949e'}}>1 lesson (2.5 hours) - Quick refresher</div>
+            </div>
+          </>
+        )}
+        
+        {selectedPkg && (
+          <button style={{...styles.button, ...styles.primary, marginTop: '10px'}} onClick={() => setStep(4)}>
+            Continue to Availability â†’
+          </button>
         )}
       </div>
-      
-      {selectedPkg === 'contact' ? (
-        <button style={{...styles.button, ...styles.primary}} onClick={() => alert('Form submitted! We will contact you shortly.')}>
-          Submit Request
-        </button>
-      ) : (
-        <>
-          <p style={{color: '#8b949e', marginBottom: '15px'}}>
-            You'll be redirected to our scheduler to pick your lesson times after payment.
-          </p>
-          <button style={{...styles.button, ...styles.primary}} onClick={() => {
-            const acuityUrl = detectedLoc.account === 'austen' 
-              ? 'https://app.acuityscheduling.com/schedule.php?owner=23214568'
-              : 'https://DeerValleyDrivingSchool.as.me';
-            window.open(acuityUrl, '_blank');
-          }}>
-            Pay & Schedule â†’
+    );
+  };
+
+  const renderStep4 = () => {
+    const price = detectedLoc.lessonPrice;
+    let pkgName = '';
+    let pkgPrice = 0;
+    let lessonCount = 0;
+    
+    switch(selectedPkg) {
+      case 'ultimate': pkgName = 'Ultimate Package (8 lessons)'; pkgPrice = price * 8; lessonCount = 8; break;
+      case 'license': pkgName = 'License Ready Package (4 lessons)'; pkgPrice = price * 4; lessonCount = 4; break;
+      case 'earlybird': pkgName = 'Early Bird Special (2 lessons)'; pkgPrice = detectedLoc.earlyBirdPrice; lessonCount = 2; break;
+      case 'intro': pkgName = 'Intro to Driving (2 lessons)'; pkgPrice = price * 2; lessonCount = 2; break;
+      case 'express': pkgName = 'Express Lesson (1 lesson)'; pkgPrice = price; lessonCount = 1; break;
+      case 'westvalley': pkgName = 'West Valley 5-Hour Lesson'; pkgPrice = price; lessonCount = 1; break;
+      case 'contact': pkgName = 'Contact for Pricing'; pkgPrice = 0; lessonCount = 0; break;
+    }
+    
+    return (
+      <div style={styles.card}>
+        <a style={styles.back} onClick={() => setStep(3)}>â† Back</a>
+        <h2>Complete Booking</h2>
+        
+        <div style={{background: '#21262d', padding: '15px', borderRadius: '6px', marginBottom: '20px'}}>
+          <div><strong>Location:</strong> {detectedLoc.name}</div>
+          <div><strong>Instructor:</strong> {detectedLoc.instructor}</div>
+          <div><strong>Package:</strong> {pkgName}</div>
+          {selectedPkg !== 'contact' && (
+            <div style={{...styles.price, marginTop: '10px'}}>
+              ${pkgPrice.toFixed(2)}
+            </div>
+          )}
+        </div>
+        
+        {selectedPkg === 'contact' ? (
+          <button style={{...styles.button, ...styles.primary}} onClick={() => alert('Form submitted! We will contact you shortly.')}>
+            Submit Request
           </button>
-        </>
-      )}
-    </div>
-  );
+        ) : (
+          <>
+            <p style={{color: '#8b949e', marginBottom: '15px'}}>
+              You'll be redirected to our scheduler to pick your {lessonCount > 1 ? lessonCount + ' lesson times' : 'lesson time'} after payment.
+            </p>
+            <button style={{...styles.button, ...styles.primary}} onClick={() => {
+              const acuityUrl = detectedLoc.account === 'austen' 
+                ? 'https://app.acuityscheduling.com/schedule.php?owner=23214568'
+                : 'https://DeerValleyDrivingSchool.as.me';
+              window.open(acuityUrl, '_blank');
+            }}>
+              Pay ${pkgPrice.toFixed(2)} & Schedule â†’
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div style={styles.container}>
