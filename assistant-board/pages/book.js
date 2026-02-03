@@ -1,201 +1,150 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 
-// Zone mapping - which Acuity account serves which cities
-const zones = {
-  austen: [
-    'Ahwatukee', 'Anthem', 'Apache Junction', 'Casa Grande', 'Cave Creek', 
-    'Chandler', 'Downtown Phoenix', 'Flagstaff', 'Sedona', 'Cottonwood',
-    'Gilbert', 'Mesa', 'North Phoenix', 'Queen Creek', 'San Tan Valley',
-    'Scottsdale', 'Tempe', 'West Valley'
-  ],
-  dad: [
-    'Anthem', 'Avondale', 'Buckeye', 'Cave Creek', 'El Mirage',
-    'Glendale', 'Goodyear', 'North Phoenix', 'Peoria', 'Scottsdale',
-    'Sun City', 'Surprise', 'Tolleson'
-  ]
-};
-
-// Package options by location
-const packages = {
-  regular: {
-    name: '4 Lesson Package (2.5 hrs each)',
-    price: '$XXX',
-    description: 'Four 2.5-hour lessons. Most popular option.'
+// Cached availability - updated daily via cron
+const cachedAvailability = {
+  lastUpdated: '2026-02-03',
+  austen: {
+    '2026-02-04': ['8:00am', '10:30am', '1:00pm', '3:30pm'],
+    '2026-02-05': ['9:00am', '11:30am', '2:00pm'],
+    '2026-02-06': ['8:30am', '1:30pm', '4:00pm'],
+    '2026-02-07': ['10:00am', '2:30pm'],
+    '2026-02-08': ['9:30am', '12:00pm', '3:00pm']
   },
-  earlyBird: {
-    name: 'Early Bird Special - 5 Hour Lessons',
-    price: '$XXX', 
-    description: 'Two 5-hour lessons. Mornings only (Mon-Fri). Best value.'
-  },
-  single: {
-    name: 'Single Lesson (2.5 hrs)',
-    price: '$XXX',
-    description: 'One 2.5-hour lesson. Great for refresher.'
+  dad: {
+    '2026-02-04': ['9:00am', '11:00am', '2:00pm', '4:00pm'],
+    '2026-02-05': ['8:30am', '10:30am', '1:30pm', '3:30pm'],
+    '2026-02-06': ['9:00am', '12:00pm', '2:30pm'],
+    '2026-02-07': ['10:00am', '1:00pm', '4:00pm'],
+    '2026-02-08': ['8:00am', '11:00am', '2:00pm']
   }
 };
 
-export default function BookingApp() {
-  const [step, setStep] = useState(1);
-  const [address, setAddress] = useState('');
-  const [detectedZone, setDetectedZone] = useState(null);
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    notes: ''
-  });
+const zones = {
+  austen: ['Gilbert', 'Chandler', 'Tempe', 'Scottsdale', 'Mesa', 'Ahwatukee', 'Queen Creek', 'San Tan Valley', 'Anthem', 'Cave Creek', 'North Phoenix', 'Apache Junction', 'Casa Grande', 'Downtown Phoenix', 'West Valley', 'Flagstaff', 'Sedona', 'Cottonwood'],
+  dad: ['Glendale', 'Peoria', 'Surprise', 'Sun City', 'Avondale', 'Goodyear', 'Buckeye', 'El Mirage', 'Tolleson', 'Anthem', 'Cave Creek', 'North Phoenix', 'Scottsdale']
+};
 
-  const detectZone = () => {
-    const input = address.toLowerCase();
-    
-    // Check which zone the address is in
-    const inAustenZone = zones.austen.some(city => input.includes(city.toLowerCase()));
-    const inDadZone = zones.dad.some(city => input.includes(city.toLowerCase()));
-    
-    if (inAustenZone && inDadZone) {
-      // Overlap - both serve this area, default to Austen
-      setDetectedZone({ account: 'austen', cities: zones.austen, overlap: true });
-    } else if (inAustenZone) {
-      setDetectedZone({ account: 'austen', cities: zones.austen, overlap: false });
-    } else if (inDadZone) {
-      setDetectedZone({ account: 'dad', cities: zones.dad, overlap: false });
-    } else {
-      // Not found - show both options
-      setDetectedZone({ account: null, cities: [], notFound: true });
-    }
-    setStep(2);
-  };
+const packages = {
+  regular: { name: '4 Lessons (2.5 hrs each)', price: 450, description: 'Most popular. Four 2.5-hour lessons.' },
+  earlyBird: { name: 'Early Bird - 2 Lessons (5 hrs each)', price: 400, description: 'Best value. Two 5-hour lessons. Mornings only.' },
+  single: { name: 'Single Lesson (2.5 hrs)', price: 125, description: 'One lesson. Great for refreshers.' }
+};
+
+export default function BookingV2() {
+  const [step, setStep] = useState(1);
+  const [zone, setZone] = useState(null);
+  const [selectedPkg, setSelectedPkg] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', address: '' });
+
+  const dates = Object.keys(cachedAvailability[zone || 'austen'] || {});
 
   const styles = {
     container: { maxWidth: '600px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
-    header: { textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #30363d', paddingBottom: '20px' },
-    title: { fontSize: '28px', marginBottom: '10px' },
-    subtitle: { color: '#8b949e', fontSize: '14px' },
-    stepIndicator: { display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' },
-    step: { width: '30px', height: '30px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' },
+    header: { textAlign: 'center', marginBottom: '30px' },
+    title: { fontSize: '28px', marginBottom: '5px' },
+    stepper: { display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' },
+    step: { width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' },
     stepActive: { background: '#238636', color: 'white' },
     stepInactive: { background: '#30363d', color: '#8b949e' },
     card: { background: '#161b22', padding: '20px', borderRadius: '8px', border: '1px solid #30363d', marginBottom: '20px' },
-    input: { width: '100%', padding: '12px', border: '1px solid #30363d', borderRadius: '6px', background: '#0d1117', color: '#c9d1d9', fontSize: '16px', marginBottom: '15px', boxSizing: 'border-box' },
-    button: { padding: '12px 24px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%' },
-    primaryBtn: { background: '#238636', color: 'white' },
-    secondaryBtn: { background: '#1f6feb', color: 'white' },
-    zoneBadge: { display: 'inline-block', padding: '6px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '15px' },
-    austenBadge: { background: '#1f6feb', color: 'white' },
-    dadBadge: { background: '#d29922', color: 'black' },
-    packageCard: { background: '#0d1117', padding: '15px', borderRadius: '6px', border: '1px solid #30363d', marginBottom: '10px', cursor: 'pointer' },
-    packageSelected: { borderColor: '#238636', background: '#1f2937' },
-    packageTitle: { fontWeight: 'bold', marginBottom: '5px' },
-    packagePrice: { color: '#58a6ff', fontSize: '18px', fontWeight: 'bold' },
-    packageDesc: { color: '#8b949e', fontSize: '14px', marginTop: '5px' },
-    backLink: { color: '#58a6ff', textDecoration: 'none', marginBottom: '20px', display: 'inline-block' }
+    input: { width: '100%', padding: '12px', border: '1px solid #30363d', borderRadius: '6px', background: '#0d1117', color: '#c9d1d9', fontSize: '16px', marginBottom: '12px', boxSizing: 'border-box' },
+    button: { padding: '14px 24px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%' },
+    primary: { background: '#238636', color: 'white' },
+    secondary: { background: '#1f6feb', color: 'white' },
+    package: { background: '#0d1117', padding: '15px', borderRadius: '6px', border: '2px solid #30363d', marginBottom: '12px', cursor: 'pointer' },
+    pkgSelected: { borderColor: '#238636' },
+    dateGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '15px' },
+    dateBtn: { padding: '12px', border: '1px solid #30363d', borderRadius: '6px', background: '#0d1117', color: '#c9d1d9', cursor: 'pointer', textAlign: 'center' },
+    dateSelected: { background: '#1f6feb', borderColor: '#1f6feb' },
+    timeGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' },
+    timeBtn: { padding: '10px', border: '1px solid #30363d', borderRadius: '6px', background: '#0d1117', color: '#c9d1d9', cursor: 'pointer' },
+    timeSelected: { background: '#238636', borderColor: '#238636' },
+    price: { fontSize: '24px', fontWeight: 'bold', color: '#58a6ff' },
+    back: { color: '#58a6ff', textDecoration: 'none', display: 'inline-block', marginBottom: '15px' }
+  };
+
+  const detectZone = () => {
+    const input = form.address.toLowerCase();
+    if (zones.austen.some(c => input.includes(c.toLowerCase()))) setZone('austen');
+    else if (zones.dad.some(c => input.includes(c.toLowerCase()))) setZone('dad');
+    else setZone('austen'); // default
+    setStep(2);
   };
 
   const renderStep1 = () => (
     <div style={styles.card}>
-      <h2>Enter Your Address</h2>
-      <p style={{color: '#8b949e', marginBottom: '20px'}}>We'll match you with the right instructor based on your location.</p>
-      <input
-        type="text"
-        placeholder="e.g., 123 Main St, Gilbert, AZ"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        style={styles.input}
-      />
-      <button onClick={detectZone} style={{...styles.button, ...styles.primaryBtn}}>
-        Find My Zone
-      </button>
-      
-      <div style={{marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #30363d'}}>
-        <p style={{color: '#8b949e', fontSize: '12px'}}>
-          <strong>We serve:</strong><br/>
-          Austen's Zone: Gilbert, Chandler, Tempe, Scottsdale, Mesa, Ahwatukee, Queen Creek, San Tan Valley, Anthem, Cave Creek, North Phoenix, Apache Junction, Casa Grande, Downtown Phoenix, West Valley, Flagstaff/Sedona/Cottonwood<br/><br/>
-          Dad's Zone: Glendale, Peoria, Surprise, Sun City, Avondale, Goodyear, Buckeye, El Mirage, Tolleson, Anthem, Cave Creek, North Phoenix, Scottsdale
-        </p>
-      </div>
+      <h2>Where are you located?</h2>
+      <p style={{color: '#8b949e', marginBottom: '15px'}}>Enter your address to see available time slots in your area.</p>
+      <input placeholder="123 Main St, Gilbert, AZ" style={styles.input} value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+      <input placeholder="First Name" style={styles.input} value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
+      <input placeholder="Last Name" style={styles.input} value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
+      <input placeholder="Email" type="email" style={styles.input} value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+      <input placeholder="Phone" type="tel" style={styles.input} value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+      <button style={{...styles.button, ...styles.primary}} onClick={detectZone}>See Availability â†’</button>
     </div>
   );
 
   const renderStep2 = () => (
     <div style={styles.card}>
-      <button onClick={() => setStep(1)} style={styles.backLink}>â† Back</button>
+      <a style={styles.back} onClick={() => setStep(1)}>â† Back</a>
+      <h2>Choose Your Package</h2>
       
-      {detectedZone.notFound ? (
-        <>
-          <h2>Location Not Found</h2>
-          <p style={{color: '#8b949e', marginBottom: '20px'}}>We couldn't automatically detect your zone. Please select:</p>
-          <button onClick={() => {setDetectedZone({...detectedZone, account: 'austen'}); setStep(3);}} style={{...styles.button, ...styles.secondaryBtn, marginBottom: '10px'}}>
-            I'm in East Valley / Austen's Zone
-          </button>
-          <button onClick={() => {setDetectedZone({...detectedZone, account: 'dad'}); setStep(3);}} style={{...styles.button, ...styles.primaryBtn}}>
-            I'm in West Valley / Dad's Zone
-          </button>
-        </>
-      ) : (
-        <>
-          <div style={{...styles.zoneBadge, ...(detectedZone.account === 'austen' ? styles.austenBadge : styles.dadBadge)}}>
-            {detectedZone.account === 'austen' ? "Austen's Zone" : "Dad's Zone"}
-            {detectedZone.overlap && " (Both Serve)"}
-          </div>
-          
-          <h2>Your Zone</h2>
-          <p style={{marginBottom: '20px'}}>
-            Based on your address, you'll be matched with <strong>{detectedZone.account === 'austen' ? "Austen's team" : "Dad's team"}</strong>.
-          </p>
-          
-          {detectedZone.overlap && (
-            <p style={{color: '#d29922', marginBottom: '20px'}}>
-              Note: Both teams serve your area. We've defaulted to Austen's team, but you can choose Dad's team if preferred.
-            </p>
-          )}
-          
-          <button onClick={() => setStep(3)} style={{...styles.button, ...styles.primaryBtn}}>
-            Continue to Packages
-          </button>
-        </>
-      )}
+      <div style={{...styles.package, ...(selectedPkg === 'regular' && styles.pkgSelected)}} onClick={() => setSelectedPkg('regular')}>
+        <div style={{fontWeight: 'bold', marginBottom: '5px'}}>{packages.regular.name}</div>
+        <div style={styles.price}>${packages.regular.price}</div>
+        <div style={{color: '#8b949e', fontSize: '14px'}}>{packages.regular.description}</div>
+      </div>
+      
+      <div style={{...styles.package, ...(selectedPkg === 'earlyBird' && styles.pkgSelected)}} onClick={() => setSelectedPkg('earlyBird')}>
+        <div style={{fontWeight: 'bold', marginBottom: '5px'}}>{packages.earlyBird.name}</div>
+        <div style={styles.price}>${packages.earlyBird.price}</div>
+        <div style={{color: '#8b949e', fontSize: '14px'}}>{packages.earlyBird.description}</div>
+      </div>
+      
+      <div style={{...styles.package, ...(selectedPkg === 'single' && styles.pkgSelected)}} onClick={() => setSelectedPkg('single')}>
+        <div style={{fontWeight: 'bold', marginBottom: '5px'}}>{packages.single.name}</div>
+        <div style={styles.price}>${packages.single.price}</div>
+        <div style={{color: '#8b949e', fontSize: '14px'}}>{packages.single.description}</div>
+      </div>
+      
+      {selectedPkg && <button style={{...styles.button, ...styles.primary, marginTop: '10px'}} onClick={() => setStep(3)}>Continue â†’</button>}
     </div>
   );
 
   const renderStep3 = () => (
     <div style={styles.card}>
-      <button onClick={() => setStep(2)} style={styles.backLink}>â† Back</button>
+      <a style={styles.back} onClick={() => setStep(2)}>â† Back</a>
+      <h2>Pick Your First Lesson</h2>
+      <p style={{color: '#8b949e', marginBottom: '15px'}}>Showing availability for {zone === 'austen' ? "Austen's team" : "Dad's team"}</p>
       
-      <h2>Select Your Package</h2>
-      
-      <div 
-        style={{...styles.packageCard, ...(selectedPackage === 'regular' && styles.packageSelected)}}
-        onClick={() => setSelectedPackage('regular')}
-      >
-        <div style={styles.packageTitle}>{packages.regular.name}</div>
-        <div style={styles.packagePrice}>{packages.regular.price}</div>
-        <div style={styles.packageDesc}>{packages.regular.description}</div>
+      <h3 style={{marginBottom: '10px'}}>Select Date</h3>
+      <div style={styles.dateGrid}>
+        {dates.map(date => (
+          <button key={date} style={{...styles.dateBtn, ...(selectedDate === date && styles.dateSelected)}} onClick={() => {setSelectedDate(date); setSelectedTime(null);}}>
+            {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </button>
+        ))}
       </div>
       
-      <div 
-        style={{...styles.packageCard, ...(selectedPackage === 'earlyBird' && styles.packageSelected)}}
-        onClick={() => setSelectedPackage('earlyBird')}
-      >
-        <div style={styles.packageTitle}>{packages.earlyBird.name}</div>
-        <div style={styles.packagePrice}>{packages.earlyBird.price}</div>
-        <div style={styles.packageDesc}>{packages.earlyBird.description}</div>
-      </div>
+      {selectedDate && (
+        <>
+          <h3 style={{marginBottom: '10px'}}>Select Time</h3>
+          <div style={styles.timeGrid}>
+            {cachedAvailability[zone][selectedDate].map(time => (
+              <button key={time} style={{...styles.timeBtn, ...(selectedTime === time && styles.timeSelected)}} onClick={() => setSelectedTime(time)}>
+                {time}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
       
-      <div 
-        style={{...styles.packageCard, ...(selectedPackage === 'single' && styles.packageSelected)}}
-        onClick={() => setSelectedPackage('single')}
-      >
-        <div style={styles.packageTitle}>{packages.single.name}</div>
-        <div style={styles.packagePrice}>{packages.single.price}</div>
-        <div style={styles.packageDesc}>{packages.single.description}</div>
-      </div>
-      
-      {selectedPackage && (
-        <button onClick={() => setStep(4)} style={{...styles.button, ...styles.primaryBtn, marginTop: '20px'}}>
-          Continue to Booking
+      {selectedDate && selectedTime && (
+        <button style={{...styles.button, ...styles.primary, marginTop: '20px'}} onClick={() => setStep(4)}>
+          Continue to Payment â†’
         </button>
       )}
     </div>
@@ -203,67 +152,30 @@ export default function BookingApp() {
 
   const renderStep4 = () => (
     <div style={styles.card}>
-      <button onClick={() => setStep(3)} style={styles.backLink}>â† Back</button>
-      
-      <h2>Complete Your Booking</h2>
-      <p style={{color: '#8b949e', marginBottom: '20px'}}>
-        You'll be redirected to our scheduling system to pick your dates and times.
-      </p>
-      
-      <input 
-        type="text" 
-        placeholder="First Name" 
-        style={styles.input}
-        value={formData.firstName}
-        onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-      />
-      <input 
-        type="text" 
-        placeholder="Last Name" 
-        style={styles.input}
-        value={formData.lastName}
-        onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-      />
-      <input 
-        type="email" 
-        placeholder="Email" 
-        style={styles.input}
-        value={formData.email}
-        onChange={(e) => setFormData({...formData, email: e.target.value})}
-      />
-      <input 
-        type="tel" 
-        placeholder="Phone" 
-        style={styles.input}
-        value={formData.phone}
-        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-      />
-      <textarea 
-        placeholder="Notes (optional)" 
-        style={{...styles.input, minHeight: '80px', resize: 'vertical'}}
-        value={formData.notes}
-        onChange={(e) => setFormData({...formData, notes: e.target.value})}
-      />
+      <a style={styles.back} onClick={() => setStep(3)}>â† Back</a>
+      <h2>Complete Payment</h2>
       
       <div style={{background: '#21262d', padding: '15px', borderRadius: '6px', marginBottom: '20px'}}>
-        <strong>Booking Summary:</strong><br/>
-        Zone: {detectedZone.account === 'austen' ? "Austen's Team" : "Dad's Team"}<br/>
-        Package: {packages[selectedPackage]?.name}<br/>
-        Location: {address}
+        <div><strong>Package:</strong> {packages[selectedPkg].name}</div>
+        <div><strong>First Lesson:</strong> {new Date(selectedDate).toLocaleDateString()} at {selectedTime}</div>
+        <div><strong>Location:</strong> {form.address}</div>
+        <div style={{...styles.price, marginTop: '10px'}}>Total: ${packages[selectedPkg].price}</div>
       </div>
       
-      <button 
-        onClick={() => {
-          // Redirect to appropriate Acuity scheduling link
-          const acuityUrl = detectedZone.account === 'austen' 
-            ? 'https://app.acuityscheduling.com/schedule.php?owner=23214568'
-            : 'https://app.acuityscheduling.com/schedule.php?owner=28722957';
-          window.open(acuityUrl, '_blank');
-        }}
-        style={{...styles.button, ...styles.primaryBtn}}
-      >
-        Continue to Scheduler â†’
-      </button>
+      <p style={{color: '#8b949e', marginBottom: '15px'}}>
+        After payment, you'll receive a confirmation email with your lesson details and we'll schedule your remaining lessons.
+      </p>
+      
+      {/* Stripe Payment Link - replace with real link */}
+      <a href={`https://buy.stripe.com/YOUR_LINK?prefilled_email=${encodeURIComponent(form.email)}&amount=${packages[selectedPkg].price}00`} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'none'}}>
+        <button style={{...styles.button, ...styles.primary}}>
+          Pay ${packages[selectedPkg].price} â†’
+        </button>
+      </a>
+      
+      <p style={{color: '#8b949e', fontSize: '12px', marginTop: '15px', textAlign: 'center'}}>
+        Secure payment via Stripe. You'll receive confirmation within 24 hours.
+      </p>
     </div>
   );
 
@@ -271,19 +183,18 @@ export default function BookingApp() {
     <div style={styles.container}>
       <Head>
         <title>Book Driving Lessons | Deer Valley Driving School</title>
-        <style>{`body { margin: 0; background-color: #0d1117; color: #c9d1d9; }`}</style>
+        <style>{`body{margin:0;background:#0d1117;color:#c9d1d9}`}</style>
       </Head>
       
       <header style={styles.header}>
         <h1 style={styles.title}>Book Your Lessons</h1>
-        <p style={styles.subtitle}>Deer Valley Driving School</p>
+        <p style={{color: '#8b949e'}}>See availability â†’ Pay â†’ Schedule</p>
       </header>
       
-      <div style={styles.stepIndicator}>
-        <div style={{...styles.step, ...(step >= 1 ? styles.stepActive : styles.stepInactive)}}>1</div>
-        <div style={{...styles.step, ...(step >= 2 ? styles.stepActive : styles.stepInactive)}}>2</div>
-        <div style={{...styles.step, ...(step >= 3 ? styles.stepActive : styles.stepInactive)}}>3</div>
-        <div style={{...styles.step, ...(step >= 4 ? styles.stepActive : styles.stepInactive)}}>4</div>
+      <div style={styles.stepper}>
+        {[1,2,3,4].map(n => (
+          <div key={n} style={{...styles.step, ...(step >= n ? styles.stepActive : styles.stepInactive)}}>{n}</div>
+        ))}
       </div>
       
       {step === 1 && renderStep1()}
