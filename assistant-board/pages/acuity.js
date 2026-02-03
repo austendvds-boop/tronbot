@@ -85,6 +85,53 @@ export default function AcuityDashboard() {
         { date: '2026-02-04', time: '2:30pm', instructor: 'Ernie', location: 'Peoria', lessonNum: 1 }
       ],
       remaining: 3
+    },
+    'Samantha Jones': {
+      package: '4 Lesson Package',
+      completed: [
+        { date: '2026-01-25', time: '9:00am', instructor: 'Michelle', location: 'Glendale', lessonNum: 1, notes: 'First lesson, basics' }
+      ],
+      upcoming: [
+        { date: '2026-02-03', time: '9:00am', instructor: 'Michelle', location: 'Glendale', lessonNum: 2 }
+      ],
+      remaining: 2
+    },
+    'Marcus Chen': {
+      package: '4 Lesson Package',
+      completed: [
+        { date: '2026-01-18', time: '11:00am', instructor: 'Allan', location: 'Surprise', lessonNum: 1, notes: 'Parking practice' },
+        { date: '2026-01-25', time: '11:00am', instructor: 'Allan', location: 'Surprise', lessonNum: 2, notes: 'Highway driving' }
+      ],
+      upcoming: [
+        { date: '2026-02-03', time: '11:00am', instructor: 'Allan', location: 'Surprise', lessonNum: 3 }
+      ],
+      remaining: 1
+    },
+    'Emma Rodriguez': {
+      package: '4 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '1:00pm', instructor: 'Bob', location: 'Sun City', lessonNum: 1 }
+      ],
+      remaining: 3
+    },
+    'Tyler Johnson': {
+      package: '2 Lesson Package',
+      completed: [
+        { date: '2026-01-28', time: '3:30pm', instructor: 'Brandon', location: 'Goodyear', lessonNum: 1, notes: 'City driving' }
+      ],
+      upcoming: [
+        { date: '2026-02-03', time: '3:30pm', instructor: 'Brandon', location: 'Goodyear', lessonNum: 2 }
+      ],
+      remaining: 0
+    },
+    'Ava Smith': {
+      package: '4 Lesson Package',
+      completed: [],
+      upcoming: [
+        { date: '2026-02-03', time: '5:00pm', instructor: 'Freddy', location: 'Litchfield Park', lessonNum: 1 }
+      ],
+      remaining: 3
     }
   };
 
@@ -125,7 +172,12 @@ export default function AcuityDashboard() {
           { id: '7', student: 'Lily Vaughan', time: '5:30pm', instructor: 'Aaron', lesson: '1 of ?', location: 'Gilbert', date: '2026-02-03' }
         ],
         dad: [
-          { id: '8', student: 'Brayden Miller', time: '2:30pm', instructor: 'Ernie', lesson: '1 of 4', location: 'Peoria', date: '2026-02-04' }
+          { id: '8', student: 'Brayden Miller', time: '2:30pm', instructor: 'Ernie', lesson: '1 of 4', location: 'Peoria', date: '2026-02-04' },
+          { id: '9', student: 'Samantha Jones', time: '9:00am', instructor: 'Michelle', lesson: '2 of 4', location: 'Glendale', date: '2026-02-03' },
+          { id: '10', student: 'Marcus Chen', time: '11:00am', instructor: 'Allan', lesson: '3 of 4', location: 'Surprise', date: '2026-02-03' },
+          { id: '11', student: 'Emma Rodriguez', time: '1:00pm', instructor: 'Bob', lesson: '1 of 4', location: 'Sun City', date: '2026-02-03' },
+          { id: '12', student: 'Tyler Johnson', time: '3:30pm', instructor: 'Brandon', lesson: '2 of 2', location: 'Goodyear', date: '2026-02-03' },
+          { id: '13', student: 'Ava Smith', time: '5:00pm', instructor: 'Freddy', lesson: '1 of 4', location: 'Litchfield Park', date: '2026-02-03' }
         ]
       };
       
