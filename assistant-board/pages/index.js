@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import tasksData from '../data/tasks.json';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState({ active: [], scheduled: [], completed: [] });
@@ -11,12 +12,19 @@ export default function Dashboard() {
   const [newCompleted, setNewCompleted] = useState(0);
 
   useEffect(() => {
-    fetchTasks();
+    // Load from localStorage if available, else use imported JSON
+    const saved = localStorage.getItem('clawTasks');
+    if (saved) {
+      setTasks(JSON.parse(saved));
+    } else {
+      setTasks(tasksData);
+    }
+    setLoading(false);
     
-    // Auto-refresh every 30 seconds
+    // Auto-save to localStorage every 10 seconds
     const interval = setInterval(() => {
-      fetchTasks();
-    }, 30000);
+      localStorage.setItem('clawTasks', JSON.stringify(tasks));
+    }, 10000);
     
     return () => clearInterval(interval);
   }, []);
@@ -42,12 +50,13 @@ export default function Dashboard() {
   }, [tasks]);
 
   const fetchTasks = async () => {
+    // Client-side only - load from imported JSON
     try {
-      const res = await fetch('/api/tasks');
-      const data = await res.json();
-      setTasks(data);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setTasks(tasksData);
     } catch (err) {
-      console.error('Failed to fetch tasks');
+      console.error('Failed to load tasks');
     }
     setLoading(false);
   };
@@ -56,42 +65,64 @@ export default function Dashboard() {
     e.preventDefault();
     if (!newTask.trim()) return;
     
-    try {
-      await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTask, status: 'scheduled' })
-      });
-      setNewTask('');
-      fetchTasks();
-    } catch (err) {
-      console.error('Failed to add task');
-    }
+    const newTaskObj = {
+      id: Date.now().toString(),
+      title: newTask,
+      status: 'scheduled',
+      schedule: 'Manual',
+      type: 'manual',
+      createdAt: new Date().toISOString()
+    };
+    
+    const updatedTasks = {
+      ...tasks,
+      scheduled: [...tasks.scheduled, newTaskObj]
+    };
+    
+    setTasks(updatedTasks);
+    localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
+    setNewTask('');
   };
 
   const completeTask = async (id) => {
-    try {
-      await fetch('/api/tasks', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'completed' })
-      });
-      fetchTasks();
-    } catch (err) {
-      console.error('Failed to complete task');
+    // Find task in active
+    const task = tasks.active.find(t => t.id === id);
+    if (task) {
+      const completedTask = {
+        ...task,
+        status: 'completed',
+        completedAt: new Date().toISOString()
+      };
+      
+      const updatedTasks = {
+        ...tasks,
+        active: tasks.active.filter(t => t.id !== id),
+        completed: [completedTask, ...tasks.completed]
+      };
+      
+      setTasks(updatedTasks);
+      localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
     }
   };
 
   const startTask = async (id) => {
-    try {
-      await fetch('/api/tasks', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'active' })
-      });
-      fetchTasks();
-    } catch (err) {
-      console.error('Failed to start task');
+    // Find task in scheduled
+    const task = tasks.scheduled.find(t => t.id === id);
+    if (task) {
+      const activeTask = {
+        ...task,
+        status: 'active',
+        startedAt: new Date().toISOString()
+      };
+      
+      const updatedTasks = {
+        ...tasks,
+        scheduled: tasks.scheduled.filter(t => t.id !== id),
+        active: [...tasks.active, activeTask]
+      };
+      
+      setTasks(updatedTasks);
+      localStorage.setItem('clawTasks', JSON.stringify(updatedTasks));
     }
   };
 
