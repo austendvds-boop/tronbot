@@ -27,8 +27,8 @@
       "title": "Build combined Acuity dashboard (both accounts)",
       "schedule": "Now",
       "type": "feature",
-      "status": "active",
-      "startedAt": "2026-02-03T20:43:00Z"
+      "status": "completed",
+      "completedAt": "2026-02-03T20:55:00Z"
     },
     {
       "id": "task-3",
