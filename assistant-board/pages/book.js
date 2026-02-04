@@ -54,6 +54,7 @@ export default function Booking() {
   const [times, setTimes] = useState([]);
   const [timeFilter, setTimeFilter] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Use shared location config
   const detectZone = (addressComponents) => {
@@ -336,10 +337,9 @@ export default function Booking() {
     const basePrice = useSpecialPricing ? pkg.specialPrice : pkg.price;
     const surcharge = violation ? 50 : 0;
     const total = basePrice + surcharge;
-    const [loading, setLoading] = useState(false);
 
     const handlePayment = async () => {
-      setLoading(true);
+      setPaymentLoading(true);
       
       // Get selected times as ISO strings
       const selectedTimes = times.map(idx => {
@@ -387,8 +387,8 @@ export default function Booking() {
           {useSpecialPricing && <p style={{color: '#58a6ff', fontSize: '14px'}}>Special pricing for {location.name}</p>}
           <p style={styles.price}>${total}</p>
           {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
-          <button style={{...styles.button, opacity: loading ? 0.7 : 1}} onClick={handlePayment} disabled={loading}>
-            {loading ? 'Loading...' : `Pay $${total} >`}
+          <button style={{...styles.button, opacity: paymentLoading ? 0.7 : 1}} onClick={handlePayment} disabled={paymentLoading}>
+            {paymentLoading ? 'Loading...' : `Pay $${total} >`}
           </button>
         </div>
       </div>
