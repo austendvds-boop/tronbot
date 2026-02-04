@@ -46,29 +46,48 @@ export default async function handler(request) {
   if (request.method === 'GET') {
     const url = new URL(request.url);
     const bookingId = url.searchParams.get('id');
+    const email = url.searchParams.get('email');
     
-    if (!bookingId) {
-      return new Response(JSON.stringify({ error: 'Missing booking ID' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
+    // Lookup by ID
+    if (bookingId) {
+      const data = pendingBookings.get(bookingId);
+      if (!data) {
+        return new Response(JSON.stringify({ error: 'Booking not found or expired' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
       });
     }
     
-    const data = pendingBookings.get(bookingId);
-    
-    if (!data) {
-      return new Response(JSON.stringify({ error: 'Booking not found or expired' }), {
+    // Lookup by email
+    if (email) {
+      for (const [key, value] of pendingBookings) {
+        if (value.customerEmail === email || value.studentInfo?.email === email) {
+          return new Response(JSON.stringify(value), {
+            status: 200,
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            }
+          });
+        }
+      }
+      return new Response(JSON.stringify({ error: 'Booking not found for email' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
     
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+    return new Response(JSON.stringify({ error: 'Missing booking ID or email' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
     });
   }
   
