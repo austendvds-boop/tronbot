@@ -22,17 +22,17 @@ const dadPackages = {
 const generateMockTimes = () => {
   const times = [];
   const baseDate = new Date('2026-02-04');
-  
+
   for (let week = 0; week < 8; week++) {
     const weekDate = new Date(baseDate);
     weekDate.setDate(weekDate.getDate() + (week * 7));
     const dateStr = weekDate.toISOString().split('T')[0];
-    
+
     times.push({ date: dateStr, time: '8:00am' });
     times.push({ date: dateStr, time: '10:30am' });
     times.push({ date: dateStr, time: '1:00pm' });
     times.push({ date: dateStr, time: '3:30pm' });
-    
+
     const tuesday = new Date(weekDate);
     tuesday.setDate(tuesday.getDate() + 1);
     const tueStr = tuesday.toISOString().split('T')[0];
@@ -83,7 +83,7 @@ export default function Booking() {
       setSuggestions([]);
       return;
     }
-    
+
     try {
       const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query + ', Arizona')}&key=${GOOGLE_KEY}`);
       const data = await res.json();
@@ -98,19 +98,23 @@ export default function Booking() {
   const selectAddress = (result) => {
     setAddress(result.formatted_address);
     setSuggestions([]);
-    
+
     const detected = detectZone(result.address_components);
     
-    const cityKey = detected?.city;
-    const account = detected?.account;
-    const locationData = account === 'dad' 
-      ? locationConfig[cityKey]
-      : locationConfig[cityKey];
+    // Find the city key from the config
+    let cityKey = null;
+    for (const [key, loc] of Object.entries(locationConfig)) {
+      if (loc.name === detected?.name) {
+        cityKey = key;
+        break;
+      }
+    }
     
     setLocation({
       ...detected,
-      name: locationData?.name || cityKey,
-      instructors: locationData?.instructors || 'TBD'
+      city: cityKey,  // Add city key for API calls
+      name: detected?.name || cityKey,
+      instructors: detected?.instructors || 'TBD'
     });
   };
 
@@ -139,7 +143,7 @@ export default function Booking() {
   // Fetch real availability from Acuity
   const fetchRealAvailability = async () => {
     if (!location?.city || !location?.account) return;
-    
+
     setAvailLoading(true);
     try {
       const res = await fetch(`/api/availability?city=${location.city}&account=${location.account}&days=14`);
@@ -148,10 +152,10 @@ export default function Booking() {
         // Format the slots properly
         const formattedSlots = data.slots.map(slot => {
           const dateObj = new Date(slot.time);
-          const timeStr = dateObj.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
+          const timeStr = dateObj.toLocaleTimeString('en-US', {
+            hour: 'numeric',
             minute: '2-digit',
-            hour12: true 
+            hour12: true
           }).toLowerCase().replace(' ', '');
           return {
             date: slot.date,
@@ -172,13 +176,13 @@ export default function Booking() {
 
   const handlePayment = () => {
     if (!pkg || !location) return;
-    
+
     setPaymentLoading(true);
-    
+
     const isSpecialLocation = location?.name === 'Casa Grande' || location?.name === 'West Valley';
     const isLicensePackage = pkg.name === 'License Ready Package';
     const useSpecialPricing = isSpecialLocation && isLicensePackage && pkg.stripeSpecialBase;
-    
+
     // Use Payment Links (reliable)
     let stripeUrl;
     if (useSpecialPricing) {
@@ -186,7 +190,7 @@ export default function Booking() {
     } else {
       stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
     }
-    
+
     // Store selected times in localStorage for webhook to pick up
     if (typeof window !== 'undefined') {
       localStorage.setItem('dvds_pending_booking', JSON.stringify({
@@ -195,7 +199,7 @@ export default function Booking() {
         package: pkg
       }));
     }
-    
+
     window.location.href = stripeUrl;
   };
 
@@ -215,20 +219,20 @@ export default function Booking() {
         <div style={styles.header}><h1 style={styles.title}>Book Your Lessons</h1></div>
         <div style={styles.card}>
           <h2>Enter your address</h2>
-          <input 
-            placeholder="Start typing your address..." 
-            style={styles.input} 
-            value={address} 
+          <input
+            placeholder="Start typing your address..."
+            style={styles.input}
+            value={address}
             onChange={e => {
               setAddress(e.target.value);
               searchAddress(e.target.value);
             }}
           />
-          
+
           {suggestions.length > 0 && (
             <div style={{marginBottom: '16px', border: '1px solid #30363d', borderRadius: '8px', overflow: 'hidden'}}>
               {suggestions.map((s, i) => (
-                <div 
+                <div
                   key={i}
                   style={{padding: '12px', borderBottom: '1px solid #30363d', cursor: 'pointer', background: '#0d1117'}}
                   onClick={() => selectAddress(s)}
@@ -238,16 +242,16 @@ export default function Booking() {
               ))}
             </div>
           )}
-          
+
           {location && (
             <div style={{background: '#1f2937', padding: '16px', borderRadius: '8px', marginBottom: '16px'}}>
               <p><strong>Zone Detected:</strong> {location.name}</p>
               <p style={{color: '#8b949e', fontSize: '14px'}}>Instructor: {location.instructors}</p>
             </div>
           )}
-          
-          <button 
-            style={{...styles.button, opacity: location ? 1 : 0.5}} 
+
+          <button
+            style={{...styles.button, opacity: location ? 1 : 0.5}}
             onClick={continueToPackages}
             disabled={!location}
           >
@@ -284,22 +288,22 @@ export default function Booking() {
   // Step 3: Times
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
-    
+
     // Fetch real availability on first load
     if (realAvailability === null && !availLoading) {
       fetchRealAvailability();
     }
-    
+
     const selectedDates = new Set();
     times.forEach(t => {
       if (t) selectedDates.add(t.date);
     });
 
     // Use real availability if available, otherwise fallback to mock
-    const timeSlots = realAvailability && realAvailability.length > 0 
-      ? realAvailability 
+    const timeSlots = realAvailability && realAvailability.length > 0
+      ? realAvailability
       : mockTimes.map((t, i) => ({...t, index: i}));
-    
+
     // Filter and add index if needed
     const filteredTimes = timeSlots.map((t, i) => ({...t, index: t.index ?? i})).filter(t => {
       if (selectedDates.has(t.date)) return false;
@@ -309,7 +313,7 @@ export default function Booking() {
       const isPM = t.time.includes('pm');
       const isAfternoon = isPM && hour >= 1;
       const isMorning = !isPM || (isPM && hour === 12);
-      
+
       if (timeFilter === 'weekend') return day === 0 || day === 6;
       if (timeFilter === 'afternoon') return (day >= 1 && day <= 5) && isAfternoon;
       if (timeFilter === 'morning') return (day >= 1 && day <= 5) && isMorning;
@@ -336,9 +340,9 @@ export default function Booking() {
               <p style={{margin: '4px 0 0 0', fontSize: '14px'}}>+$50 surcharge applies</p>
             </div>
           )}
-          
+
           {availLoading && <p style={{textAlign: 'center', padding: '20px'}}>Loading available times from Acuity...</p>}
-          
+
           {!isComplete && !availLoading ? (
             <>
               {realAvailability && realAvailability.length > 0 && (
@@ -353,14 +357,14 @@ export default function Booking() {
                 <button style={tabStyle(timeFilter === 'afternoon')} onClick={() => setTimeFilter('afternoon')}>Afternoon M-F</button>
                 <button style={tabStyle(timeFilter === 'weekend')} onClick={() => setTimeFilter('weekend')}>Weekend</button>
               </div>
-              
+
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
                 {filteredTimes.map((t) => {
                   const isSelected = times.some(selected => selected.date === t.date && selected.time === t.time);
                   return (
-                    <button 
-                      key={t.index} 
-                      style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}} 
+                    <button
+                      key={t.index}
+                      style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}}
                       onClick={() => {
                         if (isSelected) {
                           setTimes(times.filter(x => !(x.date === t.date && x.time === t.time)));
