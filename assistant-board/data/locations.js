@@ -191,12 +191,9 @@ export const zipToLocation = {
   // Cave Creek
   '85331': 'caveCreek',
   
-  // Anthem/North Phoenix
+  // Anthem
   '85086': 'anthem',
   '85087': 'anthem',
-  '85085': 'anthem',
-  '85083': 'northPhoenix',
-  '85085': 'northPhoenix',
   
   // West Valley - Dad
   '85301': 'glendale',
@@ -233,7 +230,21 @@ export const zipToLocation = {
   '85128': 'casaGrande',
   '85193': 'casaGrande',
   
-  // Downtown Phoenix (anything south of Glendale in Phoenix)
+  // North Phoenix - Dad's territory (north of Glendale Road/Lincoln)
+  '85024': 'northPhoenix',
+  '85027': 'northPhoenix',
+  '85028': 'northPhoenix',
+  '85029': 'northPhoenix',
+  '85050': 'northPhoenix',
+  '85051': 'northPhoenix',
+  '85053': 'northPhoenix',
+  '85054': 'northPhoenix',
+  '85083': 'northPhoenix',
+  '85085': 'northPhoenix',
+  '85086': 'northPhoenix',
+  '85087': 'northPhoenix',
+  
+  // Central/South Phoenix - Austen's Downtown territory
   '85003': 'downtownPhoenix',
   '85004': 'downtownPhoenix',
   '85006': 'downtownPhoenix',
@@ -252,10 +263,6 @@ export const zipToLocation = {
   '85021': 'downtownPhoenix',
   '85022': 'downtownPhoenix',
   '85023': 'downtownPhoenix',
-  '85024': 'downtownPhoenix',
-  '85027': 'downtownPhoenix',
-  '85028': 'downtownPhoenix',
-  '85029': 'downtownPhoenix',
   '85032': 'downtownPhoenix',
   '85033': 'downtownPhoenix',
   '85034': 'downtownPhoenix',
@@ -268,10 +275,6 @@ export const zipToLocation = {
   '85044': 'downtownPhoenix',
   '85045': 'downtownPhoenix',
   '85048': 'downtownPhoenix',
-  '85050': 'downtownPhoenix',
-  '85051': 'downtownPhoenix',
-  '85053': 'downtownPhoenix',
-  '85054': 'downtownPhoenix',
 };
 
 // Shea Blvd latitude boundary for Scottsdale routing
