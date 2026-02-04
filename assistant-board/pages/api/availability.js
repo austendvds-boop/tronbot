@@ -1,43 +1,62 @@
-// API route to fetch live availability from Acuity
-// This runs on the server to keep API keys secure
+// Fetch real availability from Acuity
+const acuityConfig = {
+  austen: {
+    userId: '23214568',
+    apiKey: '49898594aad433ade289daad5fbd8e84'
+  },
+  dad: {
+    userId: '28722957',
+    apiKey: '2c8203e58babe46dd2a39ca9aade2229'
+  }
+};
 
-import { acuityConfig } from '../../data/acuity-config.js';
+// Appointment type IDs for License Ready package
+const licenseReadyTypes = {
+  austen: {
+    gilbert: '44842781',
+    chandler: '76015901', 
+    mesa: '83323017',
+    tempe: '80855531',
+    scottsdale: '50528939',
+    ahwatukee: '76003665',
+    caveCreek: '66596547',
+    apacheJunction: '70526040',
+    casaGrande: '79425195',
+    downtownPhoenix: '44842749',
+    queenCreek: '50528924',
+    sanTanValley: '53640646',
+    westValley: '80855448'
+  },
+  dad: {
+    anthem: '50529545',
+    glendale: '50529754',
+    northPhoenix: '50529794',
+    peoria: '80856319',
+    sunCity: '80856381',
+    surprise: '80856400'
+  }
+};
 
 export default async function handler(req, res) {
-  const { city, account, date, days = 14 } = req.query;
+  const { city, account, days = 14 } = req.query;
   
   if (!city || !account) {
-    return res.status(400).json({ error: 'City and account required' });
+    return res.status(400).json({ error: 'Missing city or account' });
   }
   
   const config = acuityConfig[account];
-  if (!config) {
-    return res.status(400).json({ error: 'Invalid account' });
-  }
+  const aptTypeId = licenseReadyTypes[account]?.[city];
   
-  const cityConfig = config.cities[city];
-  if (!cityConfig) {
-    return res.status(400).json({ error: 'Invalid city' });
-  }
-  
-  if (!cityConfig.active) {
-    return res.status(200).json({ 
-      available: false, 
-      reason: 'Location not currently accepting bookings',
-      city: cityConfig.name 
-    });
+  if (!config || !aptTypeId) {
+    return res.status(400).json({ error: 'Invalid city or account', city, account });
   }
   
   try {
-    const credentials = Buffer.from(`${config.accountId}:${config.apiKey}`).toString('base64');
-    const headers = {
-      'Authorization': `Basic ${credentials}`,
-      'Accept': 'application/json'
-    };
+    const credentials = Buffer.from(`${config.userId}:${config.apiKey}`).toString('base64');
     
-    // Generate date range
-    const startDate = date || new Date().toISOString().split('T')[0];
+    // Get dates to check
     const dates = [];
+    const startDate = new Date();
     for (let i = 0; i < parseInt(days); i++) {
       const d = new Date(startDate);
       d.setDate(d.getDate() + i);
@@ -45,38 +64,42 @@ export default async function handler(req, res) {
     }
     
     // Fetch availability for each date
-    const availability = [];
-    const appointmentTypeId = cityConfig.appointmentTypeId;
+    const allSlots = [];
     
-    for (const checkDate of dates) {
+    for (const date of dates) {
       try {
-        const url = `https://acuityscheduling.com/api/v1/availability/times?date=${checkDate}&appointmentTypeID=${appointmentTypeId}`;
-        const response = await fetch(url, { headers });
+        const response = await fetch(
+          `https://acuityscheduling.com/api/v1/availability/times?date=${date}&appointmentTypeID=${aptTypeId}`,
+          {
+            headers: {
+              'Authorization': `Basic ${credentials}`,
+              'Accept': 'application/json'
+            }
+          }
+        );
         
         if (response.ok) {
           const times = await response.json();
           if (times && times.length > 0) {
-            availability.push({
-              date: checkDate,
-              times: times.map(t => ({
+            times.forEach(t => {
+              allSlots.push({
+                date: date,
                 time: t.time,
-                endTime: t.endTime,
-                available: true
-              }))
+                endTime: t.endTime
+              });
             });
           }
         }
       } catch (e) {
-        console.error(`Error fetching ${checkDate}:`, e);
+        console.error(`Error fetching ${date}:`, e);
       }
     }
     
     res.status(200).json({
-      city: cityConfig.name,
-      account: account,
-      appointmentTypeId,
-      specialPricing: cityConfig.specialPricing || null,
-      availability
+      city,
+      account,
+      slots: allSlots,
+      count: allSlots.length
     });
     
   } catch (error) {
