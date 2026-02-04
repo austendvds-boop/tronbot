@@ -323,6 +323,47 @@ export default function Booking() {
     const basePrice = useSpecialPricing ? pkg.specialPrice : pkg.price;
     const surcharge = violation ? 50 : 0;
     const total = basePrice + surcharge;
+    const [loading, setLoading] = useState(false);
+
+    const handlePayment = async () => {
+      setLoading(true);
+      
+      // Get selected times as ISO strings
+      const selectedTimes = times.map(idx => {
+        const t = mockTimes[idx];
+        const date = new Date(t.date + 'T' + t.time.replace('am', ':00').replace('pm', ':00'));
+        return date.toISOString();
+      });
+      
+      // Create checkout session
+      const res = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account: location?.account,
+          package: pkg.name,
+          amount: total * 100, // cents
+          location: location?.name,
+          selectedTimes,
+          customerEmail: '', // Will be collected by Stripe
+          customerName: ''
+        })
+      });
+      
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        // Fallback to Payment Link if API fails
+        let stripeUrl;
+        if (useSpecialPricing) {
+          stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
+        } else {
+          stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
+        }
+        window.location.href = stripeUrl;
+      }
+    };
 
     return (
       <div style={styles.container}>
@@ -333,16 +374,8 @@ export default function Booking() {
           {useSpecialPricing && <p style={{color: '#58a6ff', fontSize: '14px'}}>Special pricing for {location.name}</p>}
           <p style={styles.price}>${total}</p>
           {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
-          <button style={styles.button} onClick={() => {
-            let stripeUrl;
-            if (useSpecialPricing) {
-              stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
-            } else {
-              stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
-            }
-            window.location.href = stripeUrl;
-          }}>
-            Pay ${total} &gt;
+          <button style={{...styles.button, opacity: loading ? 0.7 : 1}} onClick={handlePayment} disabled={loading}>
+            {loading ? 'Loading...' : `Pay $${total} >`}
           </button>
         </div>
       </div>
