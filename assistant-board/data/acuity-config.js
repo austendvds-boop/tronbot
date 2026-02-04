@@ -9,121 +9,112 @@ export const acuityConfig = {
     cities: {
       ahwatukee: {
         name: 'Ahwatukee',
-        appointmentTypeId: '76003665', // Early Bird
+        appointmentTypeId: '76003665', // Early Bird - EXCEPTION
         calendarIds: ['11494751', '5812644'], // Aaron, Ryan
         active: true,
-        account: 'austen'
+        account: 'austen',
+        isEarlyBird: true
       },
       anthem: {
         name: 'Anthem',
-        appointmentTypeId: '50528555', // 2.5 Hour
-        earlyBirdTypeId: '76013137',
+        appointmentTypeId: '50528555', // 2.5 Hour (REGULAR)
         calendarIds: ['9880609', '6137726'], // Alex, Austen
         active: false, // Currently off
         account: 'austen'
       },
       apacheJunction: {
         name: 'Apache Junction',
-        appointmentTypeId: '70526040', // All Times
-        earlyBirdTypeId: '63747690',
+        appointmentTypeId: '70526040', // All Times (REGULAR)
         calendarIds: ['11494751', '5812644'], // Aaron, Ryan
         active: true,
         account: 'austen'
       },
       casaGrande: {
         name: 'Casa Grande',
-        appointmentTypeId: '79425195', // Early Bird only
+        appointmentTypeId: '79425195', // Early Bird only - EXCEPTION
         calendarIds: ['11494751'], // Aaron only
         active: true,
         account: 'austen',
+        isEarlyBird: true,
         specialPricing: { price: 699, description: '2 days x 5 hours' }
       },
       caveCreek: {
         name: 'Cave Creek',
-        appointmentTypeId: '66596547', // All Times
-        earlyBirdTypeId: '50528736',
+        appointmentTypeId: '66596547', // All Times (REGULAR)
         calendarIds: ['9880609', '6137726'], // Alex, Austen
         active: true,
         account: 'austen'
       },
       chandler: {
         name: 'Chandler',
-        appointmentTypeId: '76015901', // All Times
-        earlyBirdTypeId: '30922404',
+        appointmentTypeId: '76015901', // All Times (REGULAR)
         calendarIds: ['11494751', '5812644'], // Aaron, Ryan
         active: true,
         account: 'austen'
       },
       downtownPhoenix: {
         name: 'Downtown Phoenix',
-        appointmentTypeId: '44842749', // 2.5 Hour
-        earlyBirdTypeId: '80855605',
+        appointmentTypeId: '44842749', // 2.5 Hour (REGULAR)
         calendarIds: ['9880609', '5812644'], // Alex, Ryan
         active: true,
         account: 'austen'
       },
       gilbert: {
         name: 'Gilbert',
-        appointmentTypeId: '44842781', // All Times
-        earlyBirdTypeId: '79409971',
+        appointmentTypeId: '44842781', // All Times (REGULAR)
         calendarIds: ['11494751', '5812644'], // Aaron, Ryan
         active: true,
         account: 'austen'
       },
       mesa: {
         name: 'Mesa',
-        appointmentTypeId: '83323017', // All Times
-        earlyBirdTypeId: '83323068',
+        appointmentTypeId: '83323017', // All Times (REGULAR)
         calendarIds: ['11494751', '5812644'], // Aaron, Ryan
         active: true,
         account: 'austen'
       },
       northPhoenix: {
         name: 'North Phoenix',
-        appointmentTypeId: '50528913', // All Times
-        earlyBirdTypeId: '76012898',
+        appointmentTypeId: '50528913', // All Times (REGULAR)
         calendarIds: ['9880609', '6137726'], // Alex, Austen
         active: false, // Dad covering now
         account: 'austen'
       },
       queenCreek: {
         name: 'Queen Creek',
-        appointmentTypeId: '50528924', // 2.5 Hour
-        earlyBirdTypeId: '76012675',
+        appointmentTypeId: '50528924', // 2.5 Hour (REGULAR)
         calendarIds: ['11494751'], // Aaron only
         active: true,
         account: 'austen'
       },
       sanTanValley: {
         name: 'San Tan Valley',
-        appointmentTypeId: '53640646', // 2.5 Hour
-        earlyBirdTypeId: '76005046',
+        appointmentTypeId: '53640646', // 2.5 Hour (REGULAR)
         calendarIds: ['11494751', '5812644'], // Aaron, Ryan
         active: true,
         account: 'austen'
       },
       scottsdale: {
         name: 'Scottsdale',
-        appointmentTypeId: '50528939', // 2.5 Hour
-        earlyBirdTypeId: '76012750',
+        appointmentTypeId: '50528939', // 2.5 Hour (REGULAR)
         calendarIds: ['9880609', '5812644'], // Alex, Ryan
         active: true,
         account: 'austen'
       },
       tempe: {
         name: 'Tempe',
-        appointmentTypeId: '80855531', // 2.5 Hour
-        earlyBirdTypeId: '85088423',
+        appointmentTypeId: '80855531', // 2.5 Hour (REGULAR)
         calendarIds: ['11494751', '5812644', '9880609'], // Aaron, Ryan, Alex
         active: true,
         account: 'austen'
       },
       westValley: {
         name: 'West Valley',
-        appointmentTypeId: '80855448', // Early Bird only
+        appointmentTypeId: '80855448', // Early Bird only - EXCEPTION
         calendarIds: ['9880609', '5812644'], // Alex, Ryan
         active: true,
         account: 'austen',
+        isEarlyBird: true,
         specialPricing: { price: 699, description: 'Early Bird only' }
       }
     }
@@ -136,99 +127,91 @@ export const acuityConfig = {
     cities: {
       anthem: {
         name: 'Anthem',
-        appointmentTypeId: '50529545', // All Times
-        earlyBirdTypeId: '71529895',
+        appointmentTypeId: '50529545', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347', '5643860'], // Freddy, Tony, etc
         active: true,
         account: 'dad'
       },
       avondale: {
         name: 'Avondale',
-        appointmentTypeId: '50529572',
+        appointmentTypeId: '50529572', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       buckeye: {
         name: 'Buckeye',
-        appointmentTypeId: '50529642',
+        appointmentTypeId: '50529642', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       caveCreek: {
         name: 'Cave Creek',
-        appointmentTypeId: '44843029',
-        earlyBirdTypeId: '80856073',
+        appointmentTypeId: '44843029', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       elMirage: {
         name: 'El Mirage',
-        appointmentTypeId: '59985753',
+        appointmentTypeId: '59985753', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       glendale: {
         name: 'Glendale',
-        appointmentTypeId: '50529754', // All Times
-        earlyBirdTypeId: '50529778',
+        appointmentTypeId: '50529754', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347', '5643860'],
         active: true,
         account: 'dad'
       },
       goodyear: {
         name: 'Goodyear',
-        appointmentTypeId: '80856108',
+        appointmentTypeId: '80856108', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       northPhoenix: {
         name: 'North Phoenix',
-        appointmentTypeId: '50529794', // All Times
-        earlyBirdTypeId: '50529846',
+        appointmentTypeId: '50529794', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347', '5643860'],
         active: true,
         account: 'dad'
       },
       peoria: {
         name: 'Peoria',
-        appointmentTypeId: '80856319', // All Times
-        earlyBirdTypeId: '50529862',
+        appointmentTypeId: '80856319', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347', '5643860'],
         active: true,
         account: 'dad'
       },
       scottsdale: {
         name: 'Scottsdale',
-        appointmentTypeId: '80856354',
-        earlyBirdTypeId: '44843350',
+        appointmentTypeId: '80856354', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       sunCity: {
         name: 'Sun City',
-        appointmentTypeId: '80856381', // All Times
-        earlyBirdTypeId: '50529915',
+        appointmentTypeId: '80856381', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       surprise: {
         name: 'Surprise',
-        appointmentTypeId: '80856400', // All Times
-        earlyBirdTypeId: '50529929',
+        appointmentTypeId: '80856400', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
       },
       tolleson: {
         name: 'Tolleson',
-        appointmentTypeId: '71529984',
+        appointmentTypeId: '71529984', // All Times (REGULAR)
         calendarIds: ['8130520', '10751347'],
         active: true,
         account: 'dad'
