@@ -274,8 +274,13 @@ export const zipToLocation = {
   '85054': 'downtownPhoenix',
 };
 
-// Detect location from address components
-export function detectLocationFromAddress(addressComponents) {
+// Shea Blvd latitude boundary for Scottsdale routing
+// North of Shea (>33.569) = Dad's territory
+// South of Shea (<=33.569) = Austen's territory
+const SHEA_LATITUDE = 33.569;
+
+// Detect location from address components and coordinates
+export function detectLocationFromAddress(addressComponents, lat = null, lng = null) {
   let zipCode = '';
   let cityName = '';
   
@@ -284,6 +289,27 @@ export function detectLocationFromAddress(addressComponents) {
     if (comp.types.includes('locality')) cityName = comp.long_name.toLowerCase();
     if (comp.types.includes('sublocality')) cityName = comp.long_name.toLowerCase();
   });
+  
+  // Special routing for Scottsdale - check if north or south of Shea Blvd
+  if (cityName.includes('scottsdale') && lat !== null) {
+    if (lat > SHEA_LATITUDE) {
+      // North of Shea - Dad's territory
+      return {
+        ...locationConfig.scottsdale,
+        account: 'dad',
+        instructors: 'Allan, Brandon, Freddy',
+        routingNote: 'North of Shea Blvd'
+      };
+    } else {
+      // South of Shea - Austen's territory
+      return {
+        ...locationConfig.scottsdale,
+        account: 'austen',
+        instructors: 'Alex, Ryan',
+        routingNote: 'South of Shea Blvd'
+      };
+    }
+  }
   
   // Check zip code first
   if (zipCode && zipToLocation[zipCode]) {
