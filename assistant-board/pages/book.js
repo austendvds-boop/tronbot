@@ -2,11 +2,20 @@ import { useState } from 'react';
 import Head from 'next/head';
 import { locationConfig, detectLocationFromAddress } from '../data/locations.js';
 
-const packages = {
+// Austen's Stripe links
+const austenPackages = {
   ultimate: { name: 'Ultimate Package', price: 1299, lessons: 8, hours: 20, stripeBase: 'https://buy.stripe.com/5kQ6oI8EP6BW4dBaT02ZO1f', stripeUpcharge: 'https://buy.stripe.com/dRm7sM8EP5xS39x5yG2ZO1d' },
   license: { name: 'License Ready Package', price: 680, lessons: 4, hours: 10, stripeBase: 'https://buy.stripe.com/aFaeVe8EP4tO5hF9OW2ZO1b', stripeUpcharge: 'https://buy.stripe.com/bJedRa6wH2lGh0n2mu2ZO1c', stripeSpecialBase: 'https://buy.stripe.com/fZu5kE2gr7G0bG38KS2ZO1j', stripeSpecialUpcharge: 'https://buy.stripe.com/3cI7sM3kvd0k8tR5yG2ZO1k', specialPrice: 700 },
   intro: { name: 'Intro to Driving', price: 350, lessons: 2, hours: 5, stripeBase: 'https://buy.stripe.com/00w9AUaMX2lG5hF4uC2ZO1g', stripeUpcharge: 'https://buy.stripe.com/cNi3cwdZ99O86lJaT02ZO1h' },
   express: { name: 'Express Lesson', price: 200, lessons: 1, hours: 2.5, stripeBase: 'https://buy.stripe.com/00wbJ2dZ9gcweSf1iq2ZO1i', stripeUpcharge: null }
+};
+
+// Dad's Stripe links
+const dadPackages = {
+  ultimate: { name: 'Ultimate Package', price: 1299, lessons: 8, hours: 20, stripeBase: 'https://buy.stripe.com/bJe14mdxCf2Eaga6vSg7e0d', stripeUpcharge: 'https://buy.stripe.com/bJeaEW516aMo3RM9I4g7e0e' },
+  license: { name: 'License Ready Package', price: 680, lessons: 4, hours: 10, stripeBase: 'https://buy.stripe.com/6oU00ictyg6I4VQbQcg7e0f', stripeUpcharge: 'https://buy.stripe.com/3cI14mbpug6I5ZUg6sg7e0g' },
+  intro: { name: 'Intro to Driving', price: 350, lessons: 2, hours: 5, stripeBase: 'https://buy.stripe.com/4gMcN43X2bQs3RMg6sg7e0j', stripeUpcharge: null },
+  express: { name: 'Express Lesson', price: 200, lessons: 1, hours: 2.5, stripeBase: 'https://buy.stripe.com/6oUfZg65a4o0aga6vSg7e0h', stripeUpcharge: null }
 };
 
 // Generate mock times once
@@ -150,6 +159,9 @@ export default function Booking() {
 
   // Step 2: Package
   if (step === 2) {
+    // Use Dad's packages for Dad's locations, otherwise Austen's
+    const packages = location?.account === 'dad' ? dadPackages : austenPackages;
+    
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
