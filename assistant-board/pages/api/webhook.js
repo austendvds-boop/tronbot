@@ -5,6 +5,9 @@ export const config = {
   runtime: 'edge',
 };
 
+// API base URL for looking up bookings
+const API_BASE = 'https://assistant-board-c0dhb0217-austs-projects-ee024705.vercel.app';
+
 // Updated appointment type IDs (confirmed with user)
 const appointmentTypes = {
   austen: {
@@ -85,14 +88,31 @@ export default async function handler(request) {
     // Handle successful checkout
     if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
       const session = event.data?.object || event.data;
-      const metadata = session.metadata || {};
+      
+      // Get client_reference_id which contains our booking ID
+      const bookingId = session.client_reference_id;
       
       console.log('Webhook received:', { 
         type: event.type, 
-        customer: metadata.customerName || session.customer_details?.name,
-        location: metadata.location,
-        city: metadata.city
+        bookingId: bookingId,
+        customer: session.customer_details?.name || session.customer_email
       });
+
+      // Fetch booking data from our store API
+      let bookingData = {};
+      if (bookingId) {
+        try {
+          const lookupRes = await fetch(`${API_BASE}/api/store-booking?id=${bookingId}`);
+          if (lookupRes.ok) {
+            bookingData = await lookupRes.json();
+            console.log('Retrieved booking data:', bookingData);
+          } else {
+            console.error('Failed to lookup booking:', await lookupRes.text());
+          }
+        } catch (err) {
+          console.error('Error looking up booking:', err);
+        }
+      }
 
       const {
         account,
@@ -110,7 +130,7 @@ export default async function handler(request) {
         birthdate,
         permitDuration,
         notes
-      } = metadata;
+      } = bookingData;
 
       // Validate required data
       if (!account || !city || !selectedTimes) {
