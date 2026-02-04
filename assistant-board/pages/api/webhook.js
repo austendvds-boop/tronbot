@@ -90,24 +90,24 @@ export default async function handler(request) {
       const session = event.data?.object || event.data;
       
       // Get customer email for matching
-      const customerEmail = session.customer_details?.email || session.customer_email;
+      const stripeCustomerEmail = session.customer_details?.email || session.customer_email;
       
       console.log('Webhook received:', { 
         type: event.type, 
         customer: session.customer_details?.name || session.customer_email,
-        email: customerEmail
+        email: stripeCustomerEmail
       });
 
       // Try to find booking data by customer email (stored before payment)
       let bookingData = {};
       try {
-        const lookupRes = await fetch(`${API_BASE}/api/store-booking?email=${encodeURIComponent(customerEmail || '')}`);
+        const lookupRes = await fetch(`${API_BASE}/api/store-booking?email=${encodeURIComponent(stripeCustomerEmail || '')}`);
         if (lookupRes.ok) {
           bookingData = await lookupRes.json();
           console.log('Retrieved booking data by email:', bookingData);
         }
       } catch (err) {
-        console.log('No booking data found for email:', customerEmail);
+        console.log('No booking data found for email:', stripeCustomerEmail);
       }
 
       const {
