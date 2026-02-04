@@ -47,7 +47,7 @@ const appointmentTypes = {
     northPhoenix: '50529846',
     peoria: '50529862',
     // Scottsdale (North of Shea) - routes to Dad's calendar
-    scottsdaleDad: '44843350'
+    scottsdaleDad: '44843350',
     sunCity: '50529915',
     surprise: '50529929',
     // El Mirage routes to Surprise
