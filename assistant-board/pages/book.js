@@ -471,20 +471,194 @@ export default function Booking() {
     );
   }
 
-  // Step 5: Info
+  // Step 5: Student Info
+  const [studentInfo, setStudentInfo] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    lessonCount: pkg?.lessons || '',
+    pickupAddress: address || '',
+    birthdate: '',
+    permitDuration: '',
+    howDidYouFindUs: '',
+    gateCode: '',
+    altPhone: '',
+    altPickupAddress: '',
+    notes: '',
+    agreeReschedule: false,
+    agreeInfoCorrect: false,
+    agreeValidPermit: false
+  });
+
+  const updateStudentInfo = (field, value) => {
+    setStudentInfo(prev => ({ ...prev, [field]: value }));
+  };
+
+  const canSubmit = studentInfo.firstName && studentInfo.lastName && studentInfo.phone && 
+    studentInfo.email && studentInfo.pickupAddress && studentInfo.birthdate && 
+    studentInfo.permitDuration && studentInfo.agreeReschedule && 
+    studentInfo.agreeInfoCorrect && studentInfo.agreeValidPermit;
+
+  const submitBooking = () => {
+    // Store student info for webhook
+    if (typeof window !== 'undefined') {
+      const bookingData = JSON.parse(localStorage.getItem('dvds_pending_booking') || '{}');
+      localStorage.setItem('dvds_pending_booking', JSON.stringify({
+        ...bookingData,
+        studentInfo: studentInfo,
+        status: 'pending_acuity_booking'
+      }));
+    }
+    alert('Booking confirmed! We will send you a confirmation email shortly.');
+  };
+
   return (
     <div style={styles.container}>
       <Head><title>Book | DVDS</title></Head>
-      <div style={styles.header}><h1 style={styles.title}>Student Info</h1><p style={{color: '#238636', fontWeight: 'bold'}}>[PAID]</p></div>
+      <div style={styles.header}>
+        <h1 style={styles.title}>Student Information</h1>
+        <p style={{color: '#238636', fontWeight: 'bold'}}>[PAID]</p>
+      </div>
       <div style={styles.card}>
-        <input placeholder="First Name" style={styles.input} />
-        <input placeholder="Last Name" style={styles.input} />
-        <input placeholder="Email" type="email" style={styles.input} />
-        <input placeholder="Phone" type="tel" style={styles.input} />
-        <input placeholder="Address" style={styles.input} />
-        <textarea placeholder="Notes (optional)" style={{...styles.input, minHeight: '80px'}} />
-        <button style={styles.button} onClick={() => alert('Booking confirmed!')}>
-          Complete Booking &gt;
+        <p style={{color: '#8b949e', marginBottom: '16px', fontSize: '14px'}}>
+          Please use the student's information below
+        </p>
+
+        <h3 style={{marginBottom: '12px', color: '#58a6ff'}}>Student Details *</h3>
+        <input 
+          placeholder="First Name *" 
+          style={styles.input} 
+          value={studentInfo.firstName}
+          onChange={(e) => updateStudentInfo('firstName', e.target.value)}
+        />
+        <input 
+          placeholder="Last Name *" 
+          style={styles.input}
+          value={studentInfo.lastName}
+          onChange={(e) => updateStudentInfo('lastName', e.target.value)}
+        />
+        <input 
+          placeholder="Phone *" 
+          type="tel" 
+          style={styles.input}
+          value={studentInfo.phone}
+          onChange={(e) => updateStudentInfo('phone', e.target.value)}
+        />
+        <input 
+          placeholder="Email *" 
+          type="email" 
+          style={styles.input}
+          value={studentInfo.email}
+          onChange={(e) => updateStudentInfo('email', e.target.value)}
+        />
+        <input 
+          placeholder="Student Birthdate (MM/DD/YYYY) *" 
+          style={styles.input}
+          value={studentInfo.birthdate}
+          onChange={(e) => updateStudentInfo('birthdate', e.target.value)}
+        />
+
+        <h3 style={{margin: '20px 0 12px', color: '#58a6ff'}}>Lesson Details *</h3>
+        <input 
+          placeholder="How many lessons did you purchase? *" 
+          style={styles.input}
+          value={studentInfo.lessonCount}
+          onChange={(e) => updateStudentInfo('lessonCount', e.target.value)}
+        />
+        <input 
+          placeholder="How long has student had their permit? *" 
+          style={styles.input}
+          value={studentInfo.permitDuration}
+          onChange={(e) => updateStudentInfo('permitDuration', e.target.value)}
+        />
+        <input 
+          placeholder="Pickup Address * (double check spelling)" 
+          style={styles.input}
+          value={studentInfo.pickupAddress}
+          onChange={(e) => updateStudentInfo('pickupAddress', e.target.value)}
+        />
+        <input 
+          placeholder="How did you find us?" 
+          style={styles.input}
+          value={studentInfo.howDidYouFindUs}
+          onChange={(e) => updateStudentInfo('howDidYouFindUs', e.target.value)}
+        />
+
+        <h3 style={{margin: '20px 0 12px', color: '#58a6ff'}}>Additional Information</h3>
+        <input 
+          placeholder="Gate code (if applicable)" 
+          style={styles.input}
+          value={studentInfo.gateCode}
+          onChange={(e) => updateStudentInfo('gateCode', e.target.value)}
+        />
+        <input 
+          placeholder="Additional phone number" 
+          type="tel"
+          style={styles.input}
+          value={studentInfo.altPhone}
+          onChange={(e) => updateStudentInfo('altPhone', e.target.value)}
+        />
+        <input 
+          placeholder="Alternate pickup address for specific dates" 
+          style={styles.input}
+          value={studentInfo.altPickupAddress}
+          onChange={(e) => updateStudentInfo('altPickupAddress', e.target.value)}
+        />
+        <textarea 
+          placeholder="Additional notes for instructor" 
+          style={{...styles.input, minHeight: '80px'}}
+          value={studentInfo.notes}
+          onChange={(e) => updateStudentInfo('notes', e.target.value)}
+        />
+
+        <h3 style={{margin: '20px 0 12px', color: '#58a6ff'}}>Agreements *</h3>
+        
+        <label style={{display: 'flex', alignItems: 'flex-start', marginBottom: '12px', cursor: 'pointer'}}>
+          <input 
+            type="checkbox" 
+            checked={studentInfo.agreeReschedule}
+            onChange={(e) => updateStudentInfo('agreeReschedule', e.target.checked)}
+            style={{marginRight: '8px', marginTop: '4px', width: '18px', height: '18px'}}
+          />
+          <span style={{fontSize: '14px', lineHeight: '1.4'}}>
+            I understand that we need 2 days notice to reschedule a lesson for free. 
+            Less than 2 days notice is a $75 rescheduling fee. *
+          </span>
+        </label>
+
+        <label style={{display: 'flex', alignItems: 'flex-start', marginBottom: '12px', cursor: 'pointer'}}>
+          <input 
+            type="checkbox" 
+            checked={studentInfo.agreeInfoCorrect}
+            onChange={(e) => updateStudentInfo('agreeInfoCorrect', e.target.checked)}
+            style={{marginRight: '8px', marginTop: '4px', width: '18px', height: '18px'}}
+          />
+          <span style={{fontSize: '14px', lineHeight: '1.4'}}>
+            I agree that if any information above is incorrect and the instructor is late, 
+            we won't be able to make up the time. *
+          </span>
+        </label>
+
+        <label style={{display: 'flex', alignItems: 'flex-start', marginBottom: '20px', cursor: 'pointer'}}>
+          <input 
+            type="checkbox" 
+            checked={studentInfo.agreeValidPermit}
+            onChange={(e) => updateStudentInfo('agreeValidPermit', e.target.checked)}
+            style={{marginRight: '8px', marginTop: '4px', width: '18px', height: '18px'}}
+          />
+          <span style={{fontSize: '14px', lineHeight: '1.4'}}>
+            I agree the student has a valid Arizona permit. If student does not have a valid 
+            Arizona permit at the time of lesson, the class will be cancelled with no refund. *
+          </span>
+        </label>
+
+        <button 
+          style={{...styles.button, opacity: canSubmit ? 1 : 0.5, background: canSubmit ? '#238636' : '#30363d'}} 
+          onClick={submitBooking}
+          disabled={!canSubmit}
+        >
+          {canSubmit ? 'Complete Booking >' : 'Please fill all required fields'}
         </button>
       </div>
     </div>
