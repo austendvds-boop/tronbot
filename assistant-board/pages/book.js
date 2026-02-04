@@ -59,6 +59,7 @@ export default function Booking() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [realAvailability, setRealAvailability] = useState(null);
   const [availLoading, setAvailLoading] = useState(false);
+  const [unsupportedLocation, setUnsupportedLocation] = useState(false);
 
   const styles = {
     container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
@@ -98,6 +99,7 @@ export default function Booking() {
   const selectAddress = (result) => {
     setAddress(result.formatted_address);
     setSuggestions([]);
+    setUnsupportedLocation(false);
 
     // Get coordinates for special routing (Scottsdale north/south of Shea)
     const lat = result.geometry?.location?.lat;
@@ -105,13 +107,29 @@ export default function Booking() {
     
     const detected = detectZone(result.address_components, lat, lng);
     
-    // Find the city key from the config
+    // Check if this is a supported location (not the default Gilbert fallback)
+    let isSupported = false;
     let cityKey = null;
+    
     for (const [key, loc] of Object.entries(locationConfig)) {
       if (loc.name === detected?.name) {
         cityKey = key;
+        isSupported = true;
         break;
       }
+    }
+    
+    // If no match found or it defaulted to Gilbert without being Gilbert, mark as unsupported
+    if (!isSupported || (detected?.name === 'Gilbert' && !result.formatted_address.toLowerCase().includes('gilbert'))) {
+      setUnsupportedLocation(true);
+      setLocation({
+        name: detected?.name || 'Unknown Area',
+        instructors: 'Please call for availability',
+        account: null,
+        city: null,
+        unsupported: true
+      });
+      return;
     }
     
     // Special case for Scottsdale - use different keys based on routing
@@ -123,7 +141,8 @@ export default function Booking() {
       ...detected,
       city: cityKey,  // Add city key for API calls
       name: detected?.name || cityKey,
-      instructors: detected?.instructors || 'TBD'
+      instructors: detected?.instructors || 'TBD',
+      unsupported: false
     });
   };
 
@@ -252,19 +271,28 @@ export default function Booking() {
             </div>
           )}
 
-          {location && (
+          {location && !location.unsupported && (
             <div style={{background: '#1f2937', padding: '16px', borderRadius: '8px', marginBottom: '16px'}}>
               <p><strong>Zone Detected:</strong> {location.name}</p>
               <p style={{color: '#8b949e', fontSize: '14px'}}>Instructor: {location.instructors}</p>
             </div>
           )}
 
+          {unsupportedLocation && (
+            <div style={{background: '#da3633', color: 'white', padding: '20px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center'}}>
+              <p style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '12px'}}>Area Not Currently Available</p>
+              <p style={{marginBottom: '16px'}}>This location is outside our current service area.</p>
+              <p style={{fontSize: '20px', fontWeight: 'bold'}}>Call (602) 663-3502</p>
+              <p style={{fontSize: '14px', marginTop: '8px'}}>for all business inquiries</p>
+            </div>
+          )}
+
           <button
-            style={{...styles.button, opacity: location ? 1 : 0.5}}
+            style={{...styles.button, opacity: location && !location.unsupported ? 1 : 0.5}}
             onClick={continueToPackages}
-            disabled={!location}
+            disabled={!location || location.unsupported}
           >
-            Continue &gt;
+            {unsupportedLocation ? 'Area Not Available' : 'Continue >'}
           </button>
         </div>
       </div>
