@@ -91,7 +91,7 @@ export default function Booking() {
         <div style={styles.card}>
           <h2>Where are you located?</h2>
           <input placeholder="e.g. Gilbert, AZ" style={styles.input} value={city} onChange={e => setCity(e.target.value)} />
-          <button style={styles.button} onClick={detectLocation}>Continue â†’</button>
+          <button style={styles.button} onClick={detectLocation}>Continue &gt;</button>
         </div>
       </div>
     );
@@ -114,7 +114,7 @@ export default function Booking() {
               <div style={{color: '#8b949e'}}>{p.lessons} lessons â€¢ {p.hours} hrs</div>
             </div>
           ))}
-          {pkg && <button style={styles.button} onClick={() => setStep(3)}>Select {pkg.lessons} Times â†’</button>}
+          {pkg && <button style={styles.button} onClick={() => setStep(3)}>Select {pkg.lessons} Times &gt;</button>}
         </div>
       </div>
     );
@@ -178,7 +178,7 @@ export default function Booking() {
         <div style={styles.card}>
           {violation && (
             <div style={{background: '#da3633', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>
-              <strong>âš ï¸ Multiple Lessons Per Week</strong>
+              <strong>! Multiple Lessons Per Week</strong>
               <p style={{margin: '4px 0 0 0', fontSize: '14px'}}>+$50 surcharge applies</p>
             </div>
           )}
@@ -212,9 +212,9 @@ export default function Booking() {
             </>
           ) : (
             <div style={{textAlign: 'center', padding: '20px 0'}}>
-              <div style={{fontSize: '48px', marginBottom: '16px'}}>âœ…</div>
+              <div style={{fontSize: '32px', fontWeight: 'bold', color: '#238636', marginBottom: '8px'}}>DONE</div>
               <p style={{fontSize: '18px', marginBottom: '20px'}}>{times.length} lessons selected</p>
-              <button style={styles.button} onClick={() => setStep(4)}>Continue â†’</button>
+              <button style={styles.button} onClick={() => setStep(4)}>Continue &gt;</button>
             </div>
           )}
         </div>
@@ -247,7 +247,7 @@ export default function Booking() {
           <p style={styles.price}>${total}</p>
           {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
           <button style={styles.button} onClick={() => {alert(`Paid $${total}!`); setStep(5);}}>
-            Pay ${total} â†’
+            Pay ${total} &gt;
           </button>
         </div>
       </div>
@@ -258,7 +258,7 @@ export default function Booking() {
   return (
     <div style={styles.container}>
       <Head><title>Book | DVDS</title></Head>
-      <div style={styles.header}><h1 style={styles.title}>Student Info</h1><p style={{color: '#238636'}}>âœ… Payment Received</p></div>
+      <div style={styles.header}><h1 style={styles.title}>Student Info</h1><p style={{color: '#238636', fontWeight: 'bold'}}>[PAID]</p></div>
       <div style={styles.card}>
         <input placeholder="First Name" style={styles.input} />
         <input placeholder="Last Name" style={styles.input} />
@@ -267,7 +267,7 @@ export default function Booking() {
         <input placeholder="Address" style={styles.input} />
         <textarea placeholder="Notes (optional)" style={{...styles.input, minHeight: '80px'}} />
         <button style={styles.button} onClick={() => alert('Booking confirmed!')}>
-          Complete Booking â†’
+          Complete Booking &gt;
         </button>
       </div>
     </div>
