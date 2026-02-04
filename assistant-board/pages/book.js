@@ -145,7 +145,21 @@ export default function Booking() {
       const res = await fetch(`/api/availability?city=${location.city}&account=${location.account}&days=14`);
       const data = await res.json();
       if (data.slots && data.slots.length > 0) {
-        setRealAvailability(data.slots);
+        // Format the slots properly
+        const formattedSlots = data.slots.map(slot => {
+          const dateObj = new Date(slot.time);
+          const timeStr = dateObj.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+          }).toLowerCase().replace(' ', '');
+          return {
+            date: slot.date,
+            time: timeStr,
+            fullTime: slot.time
+          };
+        });
+        setRealAvailability(formattedSlots);
       } else {
         setRealAvailability([]); // Will fallback to mock
       }
