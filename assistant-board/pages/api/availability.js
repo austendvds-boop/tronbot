@@ -1,4 +1,11 @@
 // Fetch real availability from Acuity
+
+export const config = {
+  api: {
+    bodyParser: true,
+  },
+};
+
 const acuityConfig = {
   austen: {
     userId: '23214568',
@@ -38,6 +45,15 @@ const licenseReadyTypes = {
 };
 
 export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   const { city, account, days = 14 } = req.query;
   
   if (!city || !account) {
