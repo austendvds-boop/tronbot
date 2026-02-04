@@ -66,6 +66,14 @@ export const locationConfig = {
     account: 'dad', 
     active: true 
   },
+  // Cave Creek - shared, uses Dad's calendar (44843029)
+  caveCreekDad: { 
+    name: 'Cave Creek', 
+    instructors: 'Allan, Brandon', 
+    account: 'dad', 
+    active: true 
+  },
+  // Apache Junction - routes to Dad's calendar
   apacheJunction: { 
     name: 'Apache Junction', 
     instructors: 'Allan, Brandon, Freddy, Michelle, Ernie', 
@@ -104,13 +112,39 @@ export const locationConfig = {
   },
   westValley: { 
     name: 'West Valley', 
-    instructors: 'Alex, Ryan', // You said Alex/Ryan
+    instructors: 'Alex, Ryan', 
     account: 'austen', 
     active: true 
   },
+  // Cities routing to West Valley
+  avondale: { 
+    name: 'Avondale', 
+    instructors: 'Alex, Ryan', 
+    account: 'austen', 
+    active: true 
+  },
+  buckeye: { 
+    name: 'Buckeye', 
+    instructors: 'Alex, Ryan', 
+    account: 'austen', 
+    active: true 
+  },
+  goodyear: { 
+    name: 'Goodyear', 
+    instructors: 'Alex, Ryan', 
+    account: 'austen', 
+    active: true 
+  },
+  tolleson: { 
+    name: 'Tolleson', 
+    instructors: 'Alex, Ryan', 
+    account: 'austen', 
+    active: true 
+  },
+  // El Mirage routes to Surprise
   elMirage: { 
     name: 'El Mirage', 
-    instructors: 'Allan', 
+    instructors: 'Allan, Brandon', 
     account: 'dad', 
     active: true 
   },
@@ -187,6 +221,15 @@ export const zipToLocation = {
   '85351': 'sunCity',
   '85373': 'sunCity',
   '85335': 'elMirage',
+  
+  // West Valley - Austen (Avondale, Goodyear, Tolleson, Buckeye)
+  '85323': 'avondale',
+  '85392': 'avondale',
+  '85326': 'buckeye',
+  '85396': 'buckeye',
+  '85338': 'goodyear',
+  '85395': 'goodyear',
+  '85353': 'tolleson',
   
   // Apache Junction
   '85119': 'apacheJunction',
