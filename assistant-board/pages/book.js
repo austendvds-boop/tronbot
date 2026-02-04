@@ -85,7 +85,19 @@ export default function Booking() {
     setSuggestions([]);
     
     const detected = detectZone(result.address_components);
-    setLocation(detected);
+    
+    // Get full location info from config
+    const cityKey = detected?.city;
+    const account = detected?.account;
+    const locationData = account === 'dad' 
+      ? locationConfig.dad?.[cityKey] || locationConfig[cityKey]
+      : locationConfig[cityKey];
+    
+    setLocation({
+      ...detected,
+      name: locationData?.name || cityKey,
+      instructors: locationData?.instructors || 'TBD'
+    });
   };
 
   const continueToPackages = () => {
@@ -287,16 +299,17 @@ export default function Booking() {
 
   // Step 4: Pay
   if (step === 4 && pkg) {
-    // Check if Dad's location or inactive
-    if (location?.account === 'dad' || !location?.active) {
+    // Get full location config
+    const locationConfig = location?.city ? (location.account === 'dad' ? dadPackages : austenPackages) : null;
+    
+    // Check if Dad's location (we have his links now!)
+    if (!location || !location.account) {
       return (
         <div style={styles.container}>
           <Head><title>Book | DVDS</title></Head>
-          <div style={styles.header}><h1 style={styles.title}>Coming Soon</h1></div>
+          <div style={styles.header}><h1 style={styles.title}>Location Error</h1></div>
           <div style={styles.card}>
-            <p>Online booking for {location?.name || 'this area'} is coming soon!</p>
-            <p>Please call or text to book:</p>
-            <p style={{fontSize: '24px', fontWeight: 'bold', color: '#58a6ff'}}>(602) 434-7209</p>
+            <p>Could not detect location. Please go back and enter your address.</p>
             <button style={styles.button} onClick={() => setStep(1)}>Start Over</button>
           </div>
         </div>
