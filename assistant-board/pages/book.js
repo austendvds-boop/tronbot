@@ -57,7 +57,7 @@ export default function Booking() {
   const [times, setTimes] = useState([]);
   const [timeFilter, setTimeFilter] = useState('all');
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [availability, setAvailability] = useState([]);
+  const [realAvailability, setRealAvailability] = useState(null);
   const [availLoading, setAvailLoading] = useState(false);
 
   const styles = {
@@ -136,30 +136,22 @@ export default function Booking() {
   // Get packages based on location
   const packages = location?.account === 'dad' ? dadPackages : austenPackages;
 
-  // Payment handler
-  const fetchAvailability = async () => {
+  // Fetch real availability from Acuity
+  const fetchRealAvailability = async () => {
     if (!location?.city || !location?.account) return;
     
     setAvailLoading(true);
     try {
-      const res = await fetch(`/api/availability?city=${location.city}&account=${location.account}`);
+      const res = await fetch(`/api/availability?city=${location.city}&account=${location.account}&days=14`);
       const data = await res.json();
-      if (data.availability) {
-        // Flatten availability into time slots
-        const slots = [];
-        data.availability.forEach(day => {
-          day.times.forEach(time => {
-            slots.push({
-              date: day.date,
-              time: time.time,
-              endTime: time.endTime
-            });
-          });
-        });
-        setAvailability(slots);
+      if (data.slots && data.slots.length > 0) {
+        setRealAvailability(data.slots);
+      } else {
+        setRealAvailability([]); // Will fallback to mock
       }
     } catch (e) {
       console.error('Failed to fetch availability:', e);
+      setRealAvailability([]); // Fallback to mock on error
     }
     setAvailLoading(false);
   };
@@ -279,13 +271,23 @@ export default function Booking() {
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
     
+    // Fetch real availability on first load
+    if (realAvailability === null && !availLoading) {
+      fetchRealAvailability();
+    }
+    
     const selectedDates = new Set();
     times.forEach(t => {
       if (t) selectedDates.add(t.date);
     });
 
-    // Use mock times (reliable) - can switch to real Acuity later
-    const filteredTimes = mockTimes.map((t, i) => ({...t, index: i})).filter(t => {
+    // Use real availability if available, otherwise fallback to mock
+    const timeSlots = realAvailability && realAvailability.length > 0 
+      ? realAvailability 
+      : mockTimes.map((t, i) => ({...t, index: i}));
+    
+    // Filter and add index if needed
+    const filteredTimes = timeSlots.map((t, i) => ({...t, index: t.index ?? i})).filter(t => {
       if (selectedDates.has(t.date)) return false;
       const date = new Date(t.date);
       const day = date.getDay();
@@ -321,8 +323,16 @@ export default function Booking() {
             </div>
           )}
           
-          {!isComplete ? (
+          {availLoading && <p style={{textAlign: 'center', padding: '20px'}}>Loading available times from Acuity...</p>}
+          
+          {!isComplete && !availLoading ? (
             <>
+              {realAvailability && realAvailability.length > 0 && (
+                <p style={{color: '#58a6ff', fontSize: '14px', marginBottom: '12px'}}>Showing real availability from Acuity</p>
+              )}
+              {realAvailability && realAvailability.length === 0 && (
+                <p style={{color: '#8b949e', fontSize: '14px', marginBottom: '12px'}}>Showing sample times (Acuity data unavailable)</p>
+              )}
               <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
                 <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All</button>
                 <button style={tabStyle(timeFilter === 'morning')} onClick={() => setTimeFilter('morning')}>Morning M-F</button>
@@ -351,13 +361,13 @@ export default function Booking() {
                 })}
               </div>
             </>
-          ) : (
+          ) : isComplete ? (
             <div style={{textAlign: 'center', padding: '20px 0'}}>
               <div style={{fontSize: '32px', fontWeight: 'bold', color: '#238636', marginBottom: '8px'}}>DONE</div>
               <p style={{fontSize: '18px', marginBottom: '20px'}}>{times.length} lessons selected</p>
               <button style={styles.button} onClick={() => setStep(4)}>Continue &gt;</button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     );
