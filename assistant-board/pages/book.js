@@ -1,22 +1,12 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import { locationConfig, detectLocationFromAddress } from '../data/locations.js';
 
 const packages = {
   ultimate: { name: 'Ultimate Package', price: 1299, lessons: 8, hours: 20, stripeBase: 'https://buy.stripe.com/5kQ6oI8EP6BW4dBaT02ZO1f', stripeUpcharge: 'https://buy.stripe.com/dRm7sM8EP5xS39x5yG2ZO1d' },
   license: { name: 'License Ready Package', price: 680, lessons: 4, hours: 10, stripeBase: 'https://buy.stripe.com/aFaeVe8EP4tO5hF9OW2ZO1b', stripeUpcharge: 'https://buy.stripe.com/bJedRa6wH2lGh0n2mu2ZO1c' },
   intro: { name: 'Intro to Driving', price: 350, lessons: 2, hours: 5, stripeBase: 'https://buy.stripe.com/00w9AUaMX2lG5hF4uC2ZO1g', stripeUpcharge: 'https://buy.stripe.com/cNi3cwdZ99O86lJaT02ZO1h' },
   express: { name: 'Express Lesson', price: 200, lessons: 1, hours: 2.5, stripeBase: 'https://buy.stripe.com/00wbJ2dZ9gcweSf1iq2ZO1i', stripeUpcharge: null }
-};
-
-const locations = {
-  gilbert: { name: 'Gilbert', account: 'austen', instructors: 'Aaron/Ryan' },
-  chandler: { name: 'Chandler', account: 'austen', instructors: 'Aaron/Ryan' },
-  mesa: { name: 'Mesa', account: 'austen', instructors: 'Aaron/Ryan' },
-  scottsdale: { name: 'Scottsdale', account: 'austen', instructors: 'Austen' },
-  tempe: { name: 'Tempe', account: 'austen', instructors: 'Austen' },
-  anthem: { name: 'Anthem', account: 'austen', instructors: 'Austen' },
-  glendale: { name: 'Glendale', account: 'dad', instructors: 'Ernie/Michelle' },
-  peoria: { name: 'Peoria', account: 'dad', instructors: 'Ernie/Freddy' }
 };
 
 // Generate mock times once
@@ -56,47 +46,9 @@ export default function Booking() {
   const [timeFilter, setTimeFilter] = useState('all');
   const [loading, setLoading] = useState(false);
 
-  // Zone mapping by zip code prefixes/locations
-  const detectZone = (zipCode, cityName) => {
-    const zip = zipCode?.toString() || '';
-    const city = cityName?.toLowerCase() || '';
-    
-    // Gilbert/Chandler/Mesa - East Valley (Aaron/Ryan)
-    if (zip.startsWith('852') || city.includes('gilbert') || city.includes('chandler') || city.includes('mesa') || city.includes('queen creek') || city.includes('san tan')) {
-      return locations.gilbert;
-    }
-    // Scottsdale - Austen
-    if (zip.startsWith('8525') || zip.startsWith('8526') || city.includes('scottsdale') || city.includes('paradise valley')) {
-      return locations.scottsdale;
-    }
-    // Tempe - Austen
-    if (zip.startsWith('8528') || city.includes('tempe')) {
-      return locations.tempe;
-    }
-    // Anthem/New River - Austen
-    if (zip.startsWith('85086') || zip.startsWith('85087') || city.includes('anthem') || city.includes('new river')) {
-      return locations.anthem;
-    }
-    // Glendale - Dad
-    if (zip.startsWith('853') || city.includes('glendale')) {
-      return locations.glendale;
-    }
-    // Peoria - Dad
-    if (zip.startsWith('85345') || zip.startsWith('85381') || city.includes('peoria')) {
-      return locations.peoria;
-    }
-    // Phoenix zones - need more specific logic
-    if (city.includes('phoenix')) {
-      // North Phoenix - Austen
-      if (zip.startsWith('8505') || zip.startsWith('8506') || zip.startsWith('8508')) {
-        return locations.anthem; // Use anthem as north phoenix
-      }
-      // Default to Scottsdale for central Phoenix
-      return locations.scottsdale;
-    }
-    
-    // Default
-    return locations.gilbert;
+  // Use shared location config
+  const detectZone = (addressComponents) => {
+    return detectLocationFromAddress(addressComponents);
   };
 
   // Google Geocoding API key
@@ -123,16 +75,7 @@ export default function Booking() {
     setAddress(result.formatted_address);
     setSuggestions([]);
     
-    // Extract zip and city from address components
-    let zipCode = '';
-    let cityName = '';
-    
-    result.address_components?.forEach(comp => {
-      if (comp.types.includes('postal_code')) zipCode = comp.long_name;
-      if (comp.types.includes('locality')) cityName = comp.long_name;
-    });
-    
-    const detected = detectZone(zipCode, cityName);
+    const detected = detectZone(result.address_components);
     setLocation(detected);
   };
 
@@ -332,14 +275,14 @@ export default function Booking() {
 
   // Step 4: Pay
   if (step === 4 && pkg) {
-    // Check if Dad's location (not set up yet)
-    if (location?.account === 'dad') {
+    // Check if Dad's location or inactive
+    if (location?.account === 'dad' || !location?.active) {
       return (
         <div style={styles.container}>
           <Head><title>Book | DVDS</title></Head>
           <div style={styles.header}><h1 style={styles.title}>Coming Soon</h1></div>
           <div style={styles.card}>
-            <p>Online booking for {location.name} is coming soon!</p>
+            <p>Online booking for {location?.name || 'this area'} is coming soon!</p>
             <p>Please call or text to book:</p>
             <p style={{fontSize: '24px', fontWeight: 'bold', color: '#58a6ff'}}>(602) 434-7209</p>
             <button style={styles.button} onClick={() => setStep(1)}>Start Over</button>
