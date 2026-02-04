@@ -162,52 +162,24 @@ export default function Booking() {
     setAvailLoading(false);
   };
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
     if (!pkg || !location) return;
     
     setPaymentLoading(true);
-    
-    // Times are now objects with date/time
-    const selectedTimes = times.map(t => {
-      const date = new Date(t.date + 'T' + t.time.replace('am', ':00').replace('pm', ':00'));
-      return date.toISOString();
-    });
     
     const isSpecialLocation = location?.name === 'Casa Grande' || location?.name === 'West Valley';
     const isLicensePackage = pkg.name === 'License Ready Package';
     const useSpecialPricing = isSpecialLocation && isLicensePackage && pkg.stripeSpecialBase;
     
-    const basePrice = useSpecialPricing ? pkg.specialPrice : pkg.price;
-    const surcharge = violation ? 50 : 0;
-    const total = basePrice + surcharge;
-    
-    const res = await fetch('/api/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        account: location?.account,
-        package: pkg.name,
-        amount: total * 100,
-        location: location?.name,
-        selectedTimes,
-        customerEmail: '',
-        customerName: ''
-      })
-    });
-    
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
+    // Use Payment Links (reliable)
+    let stripeUrl;
+    if (useSpecialPricing) {
+      stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
     } else {
-      // Fallback to Payment Link
-      let stripeUrl;
-      if (useSpecialPricing) {
-        stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
-      } else {
-        stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
-      }
-      window.location.href = stripeUrl;
+      stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
     }
+    
+    window.location.href = stripeUrl;
   };
 
   // Calculate pricing
