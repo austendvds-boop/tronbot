@@ -41,15 +41,12 @@ const appointmentTypes = {
   },
   dad: {
     anthem: '50529545',
-    // Cave Creek uses Dad's calendar for some bookings
-    caveCreek: '44843029',
     // Apache Junction routes to Dad
     apacheJunction: '50528555',
     glendale: '50529778',
     northPhoenix: '50529846',
     peoria: '50529862',
-    // Scottsdale shared - uses Dad's calendar (44843350)
-    scottsdale: '44843350',
+    // Note: Scottsdale currently routes to Austen's calendar
     sunCity: '50529915',
     surprise: '50529929',
     // El Mirage routes to Surprise
