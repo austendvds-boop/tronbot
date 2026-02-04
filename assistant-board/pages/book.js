@@ -204,7 +204,7 @@ export default function Booking() {
                         else if (times.length < pkg.lessons) setTimes([...times, t.index]);
                       }}
                     >
-                      {t.date.slice(5)} {t.time}
+                      {new Date(t.date).toLocaleDateString('en-US', {weekday: 'short', month: 'numeric', day: 'numeric'})} {t.time}
                     </button>
                   );
                 })}
