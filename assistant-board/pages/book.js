@@ -118,14 +118,16 @@ export default function Booking() {
     if (location) setStep(2);
   };
 
-  // Calculate violation for times
+  // Calculate violation for times (times are now objects with date/time)
   let violation = false;
   for (let i = 0; i < times.length; i++) {
     for (let j = i + 1; j < times.length; j++) {
       const t1 = times[i];
       const t2 = times[j];
-      if (t1 && t2) {
-        const diff = Math.abs((new Date(t1.date) - new Date(t2.date)) / (1000 * 60 * 60 * 24));
+      if (t1 && t2 && t1.date && t2.date) {
+        const d1 = new Date(t1.date);
+        const d2 = new Date(t2.date);
+        const diff = Math.abs((d1 - d2) / (1000 * 60 * 60 * 24));
         if (diff < 7) violation = true;
       }
     }
@@ -177,6 +179,15 @@ export default function Booking() {
       stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
     } else {
       stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
+    }
+    
+    // Store selected times in localStorage for webhook to pick up
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dvds_pending_booking', JSON.stringify({
+        times: times,
+        location: location,
+        package: pkg
+      }));
     }
     
     window.location.href = stripeUrl;
@@ -258,7 +269,7 @@ export default function Booking() {
               <div style={{color: '#8b949e'}}>{p.lessons} lessons, {p.hours} hrs</div>
             </div>
           ))}
-          {pkg && <button style={styles.button} onClick={() => { fetchAvailability(); setStep(3); }}>Select {pkg.lessons} Times &gt;</button>}
+          {pkg && <button style={styles.button} onClick={() => setStep(3)}>Select {pkg.lessons} Times &gt;</button>}
         </div>
       </div>
     );
@@ -268,18 +279,13 @@ export default function Booking() {
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
     
-    // Fetch availability when step loads - use useEffect pattern with useState hack for Next.js
-    if (typeof window !== 'undefined' && availability.length === 0 && !availLoading) {
-      fetchAvailability();
-    }
-    
     const selectedDates = new Set();
     times.forEach(t => {
       if (t) selectedDates.add(t.date);
     });
 
-    // Filter availability
-    const filteredTimes = availability.filter(t => {
+    // Use mock times (reliable) - can switch to real Acuity later
+    const filteredTimes = mockTimes.map((t, i) => ({...t, index: i})).filter(t => {
       if (selectedDates.has(t.date)) return false;
       const date = new Date(t.date);
       const day = date.getDay();
@@ -315,9 +321,7 @@ export default function Booking() {
             </div>
           )}
           
-          {availLoading && <p style={{textAlign: 'center'}}>Loading available times...</p>}
-          
-          {!isComplete && !availLoading ? (
+          {!isComplete ? (
             <>
               <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
                 <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All</button>
@@ -327,37 +331,33 @@ export default function Booking() {
               </div>
               
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
-                {filteredTimes.length === 0 ? (
-                  <p>No times available. Try a different filter.</p>
-                ) : (
-                  filteredTimes.map((t, idx) => {
-                    const isSelected = times.some(selected => selected.date === t.date && selected.time === t.time);
-                    return (
-                      <button 
-                        key={idx} 
-                        style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}} 
-                        onClick={() => {
-                          if (isSelected) {
-                            setTimes(times.filter(x => !(x.date === t.date && x.time === t.time)));
-                          } else if (times.length < pkg.lessons) {
-                            setTimes([...times, t]);
-                          }
-                        }}
-                      >
-                        {new Date(t.date).toLocaleDateString('en-US', {weekday: 'short', month: 'numeric', day: 'numeric'})} {t.time}
-                      </button>
-                    );
-                  })
-                )}
+                {filteredTimes.map((t) => {
+                  const isSelected = times.some(selected => selected.date === t.date && selected.time === t.time);
+                  return (
+                    <button 
+                      key={t.index} 
+                      style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}} 
+                      onClick={() => {
+                        if (isSelected) {
+                          setTimes(times.filter(x => !(x.date === t.date && x.time === t.time)));
+                        } else if (times.length < pkg.lessons) {
+                          setTimes([...times, {date: t.date, time: t.time}]);
+                        }
+                      }}
+                    >
+                      {new Date(t.date).toLocaleDateString('en-US', {weekday: 'short', month: 'numeric', day: 'numeric'})} {t.time}
+                    </button>
+                  );
+                })}
               </div>
             </>
-          ) : isComplete ? (
+          ) : (
             <div style={{textAlign: 'center', padding: '20px 0'}}>
               <div style={{fontSize: '32px', fontWeight: 'bold', color: '#238636', marginBottom: '8px'}}>DONE</div>
               <p style={{fontSize: '18px', marginBottom: '20px'}}>{times.length} lessons selected</p>
               <button style={styles.button} onClick={() => setStep(4)}>Continue &gt;</button>
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     );
