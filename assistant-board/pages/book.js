@@ -420,20 +420,20 @@ export default function Booking() {
   // Step 3: Times
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
-    
+
     // Fetch real availability on first load
     if (realAvailability === null && !availLoading) {
       fetchRealAvailability();
     }
-    
+
     const selectedDates = new Set();
     times.forEach(t => {
       if (t) selectedDates.add(t.date);
     });
 
     // Use real availability if available, otherwise fallback to mock
-    const timeSlots = realAvailability && realAvailability.length > 0 
-      ? realAvailability 
+    const timeSlots = realAvailability && realAvailability.length > 0
+      ? realAvailability
       : mockTimes.map((t, i) => ({...t, index: i}));
 
     // Filter and add index if needed
@@ -445,7 +445,7 @@ export default function Booking() {
       const isPM = t.time.includes('pm');
       const isAfternoon = isPM && hour >= 1;
       const isMorning = !isPM || (isPM && hour === 12);
-      
+
       if (timeFilter === 'weekend') return day === 0 || day === 6;
       if (timeFilter === 'afternoon') return (day >= 1 && day <= 5) && isAfternoon;
       if (timeFilter === 'morning') return (day >= 1 && day <= 5) && isMorning;
@@ -615,31 +615,39 @@ export default function Booking() {
         </p>
 
         <h3 style={{marginBottom: '12px', color: '#58a6ff'}}>Student Details *</h3>
-        <input
-          placeholder="First Name *"
-          style={styles.input}
+        <input 
+          placeholder="First Name *" 
+          style={styles.input} 
           value={studentInfo.firstName}
           onChange={(e) => updateStudentInfo('firstName', e.target.value)}
+          autoComplete="given-name"
+          name="firstName"
         />
-        <input
-          placeholder="Last Name *"
+        <input 
+          placeholder="Last Name *" 
           style={styles.input}
           value={studentInfo.lastName}
           onChange={(e) => updateStudentInfo('lastName', e.target.value)}
+          autoComplete="family-name"
+          name="lastName"
         />
-        <input
-          placeholder="Phone *"
-          type="tel"
+        <input 
+          placeholder="Phone *" 
+          type="tel" 
           style={styles.input}
           value={studentInfo.phone}
           onChange={(e) => updateStudentInfo('phone', e.target.value)}
+          autoComplete="tel"
+          name="phone"
         />
-        <input
-          placeholder="Email *"
-          type="email"
+        <input 
+          placeholder="Email *" 
+          type="email" 
           style={styles.input}
           value={studentInfo.email}
           onChange={(e) => updateStudentInfo('email', e.target.value)}
+          autoComplete="email"
+          name="email"
         />
         <input
           placeholder="Student Birthdate (MM/DD/YYYY) *"
@@ -666,6 +674,8 @@ export default function Booking() {
           style={styles.input}
           value={studentInfo.pickupAddress}
           onChange={(e) => updateStudentInfo('pickupAddress', e.target.value)}
+          autoComplete="street-address"
+          name="pickupAddress"
         />
         <input
           placeholder="How did you find us?"
@@ -687,12 +697,16 @@ export default function Booking() {
           style={styles.input}
           value={studentInfo.altPhone}
           onChange={(e) => updateStudentInfo('altPhone', e.target.value)}
+          autoComplete="tel"
+          name="altPhone"
         />
         <input
           placeholder="Alternate pickup address for specific dates"
           style={styles.input}
           value={studentInfo.altPickupAddress}
           onChange={(e) => updateStudentInfo('altPickupAddress', e.target.value)}
+          autoComplete="street-address"
+          name="altPickupAddress"
         />
         <textarea
           placeholder="Additional notes for instructor"
