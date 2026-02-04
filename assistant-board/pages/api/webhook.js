@@ -1,49 +1,43 @@
 // Stripe webhook - auto-books into Acuity after payment
+// Edge Runtime for Vercel
 
-// Acuity API helper
-async function bookAcuityAppointment(config, appointmentData) {
-  const auth = Buffer.from(`${config.userId}:${config.apiKey}`).toString('base64');
-  
-  const res = await fetch('https://acuityscheduling.com/api/v1/appointments', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(appointmentData)
-  });
-  
-  if (!res.ok) {
-    throw new Error(`Acuity API error: ${res.status}`);
-  }
-  
-  return res.json();
-}
+export const config = {
+  runtime: 'edge',
+};
 
-// Map cities to appointment type IDs
+// Updated appointment type IDs (confirmed with user)
 const appointmentTypes = {
   austen: {
-    gilbert: '44842781',
-    chandler: '76015901',
-    mesa: '83323017',
-    tempe: '80855531',
-    scottsdale: '50528939',
-    ahwatukee: '76003665',
-    caveCreek: '66596547',
-    apacheJunction: '70526040',
-    casaGrande: '79425195',
-    downtownPhoenix: '44842749',
-    queenCreek: '50528924',
-    sanTanValley: '53640646',
-    westValley: '80855448'
+    gilbert: '44842749',
+    chandler: '50528663',
+    mesa: '44842781',
+    tempe: '50528939',
+    scottsdale: '53640646',
+    ahwatukee: '50528435',
+    caveCreek: '63747690',
+    apacheJunction: '50528555',
+    casaGrande: '70526040',
+    downtownPhoenix: '50528736',
+    queenCreek: '50528913',
+    sanTanValley: '50528924',
+    westValley: '85088423',
+    // Cities routing to West Valley
+    avondale: '85088423',
+    goodyear: '85088423',
+    tolleson: '85088423',
+    buckeye: '85088423'
   },
   dad: {
     anthem: '50529545',
-    glendale: '50529754',
-    northPhoenix: '50529794',
-    peoria: '80856319',
-    sunCity: '80856381',
-    surprise: '80856400'
+    apacheJunction: '50528555',
+    glendale: '50529778',
+    northPhoenix: '50529846',
+    peoria: '50529862',
+    scottsdale: '44843350', // North of Shea
+    scottsdaleDad: '44843350',
+    sunCity: '50529915',
+    surprise: '50529929',
+    elMirage: '50529929'
   }
 };
 
@@ -52,75 +46,174 @@ const acuityConfig = {
   dad: { userId: '28722957', apiKey: '2c8203e58babe46dd2a39ca9aade2229' }
 };
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+// Book appointment in Acuity
+async function bookAcuityAppointment(account, appointmentData) {
+  const config = acuityConfig[account];
+  if (!config) throw new Error('Invalid account');
+  
+  const credentials = btoa(`${config.userId}:${config.apiKey}`);
+  
+  const res = await fetch('https://acuityscheduling.com/api/v1/appointments', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${credentials}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(appointmentData)
+  });
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Acuity API error: ${res.status} - ${errorText}`);
+  }
+  
+  return res.json();
+}
+
+export default async function handler(request) {
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
-    const chunks = [];
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-    const rawBody = Buffer.concat(chunks).toString();
-    const event = JSON.parse(rawBody);
+    const event = await request.json();
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
+    // Handle successful checkout
+    if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
+      const session = event.data?.object || event.data;
       const metadata = session.metadata || {};
       
+      console.log('Webhook received:', { 
+        type: event.type, 
+        customer: metadata.customerName || session.customer_details?.name,
+        location: metadata.location,
+        city: metadata.city
+      });
+
       const {
         account,
+        city,
         packageType,
-        location,
-        selectedTimes,
+        packageName,
+        customerName,
         customerEmail,
-        customerName
+        customerPhone,
+        selectedTimes,
+        studentFirstName,
+        studentLastName,
+        studentPhone,
+        pickupAddress,
+        birthdate,
+        permitDuration,
+        notes
       } = metadata;
 
-      console.log('Auto-booking:', { customerName, location, packageType });
+      // Validate required data
+      if (!account || !city || !selectedTimes) {
+        console.error('Missing required data:', { account, city, selectedTimes });
+        return new Response(JSON.stringify({ 
+          received: true, 
+          booked: false, 
+          error: 'Missing required booking data' 
+        }), { status: 200 });
+      }
 
       // Get appointment type ID
-      const aptTypeId = appointmentTypes[account]?.[location];
+      const aptTypeId = appointmentTypes[account]?.[city];
       if (!aptTypeId) {
-        console.error('Unknown location:', location);
-        return res.status(200).json({ received: true, booked: false, error: 'Unknown location' });
+        console.error('Unknown city:', city, 'for account:', account);
+        return new Response(JSON.stringify({ 
+          received: true, 
+          booked: false, 
+          error: `Unknown city: ${city}` 
+        }), { status: 200 });
       }
 
       // Parse times
-      const times = JSON.parse(selectedTimes || '[]');
+      let times = [];
+      try {
+        times = JSON.parse(selectedTimes);
+      } catch (e) {
+        console.error('Failed to parse times:', selectedTimes);
+        return new Response(JSON.stringify({ 
+          received: true, 
+          booked: false, 
+          error: 'Invalid times format' 
+        }), { status: 200 });
+      }
+
+      // Build student info for notes
+      const studentInfo = [];
+      if (birthdate) studentInfo.push(`Birthdate: ${birthdate}`);
+      if (permitDuration) studentInfo.push(`Permit duration: ${permitDuration}`);
+      if (pickupAddress) studentInfo.push(`Pickup: ${pickupAddress}`);
+      if (notes) studentInfo.push(`Notes: ${notes}`);
       
+      const fullNotes = studentInfo.join('\n') || `Package: ${packageName || packageType}`;
+
       // Book each lesson
       const bookings = [];
-      for (const time of times) {
+      const errors = [];
+      
+      for (const timeSlot of times) {
         try {
-          const appointment = await bookAcuityAppointment(acuityConfig[account], {
-            appointmentTypeID: aptTypeId,
-            datetime: time,
-            firstName: customerName?.split(' ')[0] || 'Student',
-            lastName: customerName?.split(' ').slice(1).join(' ') || 'Name',
-            email: customerEmail || 'no-email@example.com',
-            notes: `Auto-booked from website. Package: ${packageType}`
+          // Format datetime for Acuity (ISO format)
+          const datetime = timeSlot.fullTime || `${timeSlot.date}T${timeSlot.time}`;
+          
+          const appointment = await bookAcuityAppointment(account, {
+            appointmentTypeID: parseInt(aptTypeId),
+            datetime: datetime,
+            firstName: studentFirstName || customerName?.split(' ')[0] || 'Student',
+            lastName: studentLastName || customerName?.split(' ').slice(1).join(' ') || '',
+            email: customerEmail || 'no-email@deervalleyschool.com',
+            phone: studentPhone || customerPhone || '',
+            notes: fullNotes
           });
-          bookings.push(appointment);
+          
+          bookings.push({
+            id: appointment.id,
+            time: datetime,
+            confirmation: appointment.confirmationCode
+          });
+          
+          console.log('Booked appointment:', appointment.id);
         } catch (err) {
-          console.error('Booking failed for time:', time, err);
+          console.error('Booking failed for time:', timeSlot, err.message);
+          errors.push({ time: timeSlot, error: err.message });
         }
       }
 
-      console.log('Booked', bookings.length, 'appointments');
-      return res.status(200).json({ received: true, booked: bookings.length });
+      console.log(`Booked ${bookings.length}/${times.length} appointments`);
+      
+      return new Response(JSON.stringify({ 
+        received: true, 
+        booked: bookings.length,
+        bookings: bookings,
+        errors: errors.length > 0 ? errors : undefined
+      }), { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    res.status(200).json({ received: true });
+    // Acknowledge other events
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
   } catch (err) {
     console.error('Webhook error:', err);
-    res.status(200).json({ received: true }); // Always return 200
+    return new Response(JSON.stringify({ 
+      received: true, 
+      error: err.message 
+    }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
