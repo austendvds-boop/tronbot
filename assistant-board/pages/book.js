@@ -57,6 +57,8 @@ export default function Booking() {
   const [times, setTimes] = useState([]);
   const [timeFilter, setTimeFilter] = useState('all');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [availability, setAvailability] = useState([]);
+  const [availLoading, setAvailLoading] = useState(false);
 
   const styles = {
     container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
@@ -120,8 +122,8 @@ export default function Booking() {
   let violation = false;
   for (let i = 0; i < times.length; i++) {
     for (let j = i + 1; j < times.length; j++) {
-      const t1 = mockTimes[times[i]];
-      const t2 = mockTimes[times[j]];
+      const t1 = times[i];
+      const t2 = times[j];
       if (t1 && t2) {
         const diff = Math.abs((new Date(t1.date) - new Date(t2.date)) / (1000 * 60 * 60 * 24));
         if (diff < 7) violation = true;
@@ -133,13 +135,40 @@ export default function Booking() {
   const packages = location?.account === 'dad' ? dadPackages : austenPackages;
 
   // Payment handler
+  const fetchAvailability = async () => {
+    if (!location?.city || !location?.account) return;
+    
+    setAvailLoading(true);
+    try {
+      const res = await fetch(`/api/availability?city=${location.city}&account=${location.account}`);
+      const data = await res.json();
+      if (data.availability) {
+        // Flatten availability into time slots
+        const slots = [];
+        data.availability.forEach(day => {
+          day.times.forEach(time => {
+            slots.push({
+              date: day.date,
+              time: time.time,
+              endTime: time.endTime
+            });
+          });
+        });
+        setAvailability(slots);
+      }
+    } catch (e) {
+      console.error('Failed to fetch availability:', e);
+    }
+    setAvailLoading(false);
+  };
+
   const handlePayment = async () => {
     if (!pkg || !location) return;
     
     setPaymentLoading(true);
     
-    const selectedTimes = times.map(idx => {
-      const t = mockTimes[idx];
+    // Times are now objects with date/time
+    const selectedTimes = times.map(t => {
       const date = new Date(t.date + 'T' + t.time.replace('am', ':00').replace('pm', ':00'));
       return date.toISOString();
     });
@@ -267,14 +296,21 @@ export default function Booking() {
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
     
+    // Fetch availability when step loads
+    useState(() => {
+      if (availability.length === 0) {
+        fetchAvailability();
+      }
+    });
+    
     const selectedDates = new Set();
-    times.forEach(idx => {
-      const t = mockTimes[idx];
+    times.forEach(t => {
       if (t) selectedDates.add(t.date);
     });
 
-    const filteredTimes = mockTimes.map((t, i) => ({...t, index: i})).filter(t => {
-      if (selectedDates.has(t.date) && !times.includes(t.index)) return false;
+    // Filter availability
+    const filteredTimes = availability.filter(t => {
+      if (selectedDates.has(t.date)) return false;
       const date = new Date(t.date);
       const day = date.getDay();
       const hour = parseInt(t.time);
@@ -309,7 +345,9 @@ export default function Booking() {
             </div>
           )}
           
-          {!isComplete ? (
+          {availLoading && <p style={{textAlign: 'center'}}>Loading available times...</p>}
+          
+          {!isComplete && !availLoading ? (
             <>
               <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
                 <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All</button>
@@ -319,30 +357,37 @@ export default function Booking() {
               </div>
               
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
-                {filteredTimes.map((t) => {
-                  const isSelected = times.includes(t.index);
-                  return (
-                    <button 
-                      key={t.index} 
-                      style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}} 
-                      onClick={() => {
-                        if (isSelected) setTimes(times.filter(x => x !== t.index));
-                        else if (times.length < pkg.lessons) setTimes([...times, t.index]);
-                      }}
-                    >
-                      {new Date(t.date).toLocaleDateString('en-US', {weekday: 'short', month: 'numeric', day: 'numeric'})} {t.time}
-                    </button>
-                  );
-                })}
+                {filteredTimes.length === 0 ? (
+                  <p>No times available. Try a different filter.</p>
+                ) : (
+                  filteredTimes.map((t, idx) => {
+                    const isSelected = times.some(selected => selected.date === t.date && selected.time === t.time);
+                    return (
+                      <button 
+                        key={idx} 
+                        style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}} 
+                        onClick={() => {
+                          if (isSelected) {
+                            setTimes(times.filter(x => !(x.date === t.date && x.time === t.time)));
+                          } else if (times.length < pkg.lessons) {
+                            setTimes([...times, t]);
+                          }
+                        }}
+                      >
+                        {new Date(t.date).toLocaleDateString('en-US', {weekday: 'short', month: 'numeric', day: 'numeric'})} {t.time}
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </>
-          ) : (
+          ) : isComplete ? (
             <div style={{textAlign: 'center', padding: '20px 0'}}>
               <div style={{fontSize: '32px', fontWeight: 'bold', color: '#238636', marginBottom: '8px'}}>DONE</div>
               <p style={{fontSize: '18px', marginBottom: '20px'}}>{times.length} lessons selected</p>
               <button style={styles.button} onClick={() => setStep(4)}>Continue &gt;</button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     );
