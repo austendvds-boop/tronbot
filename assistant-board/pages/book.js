@@ -61,7 +61,7 @@ export default function Booking() {
   const [availLoading, setAvailLoading] = useState(false);
   const [unsupportedLocation, setUnsupportedLocation] = useState(false);
   const [testMode, setTestMode] = useState(false);
-  
+
   // Test Stripe link for webhook testing
   const TEST_STRIPE_LINK = 'https://buy.stripe.com/dRm7sM9IT8K47pN5yG2ZO1l';
 
@@ -69,6 +69,16 @@ export default function Booking() {
     container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
     header: { textAlign: 'center', marginBottom: '20px' },
     title: { fontSize: '26px', fontWeight: '700' },
+    progressBar: { display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px', padding: '0 16px' },
+    progressStep: { display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, maxWidth: '80px' },
+    progressDot: { width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' },
+    progressDotActive: { background: '#238636', color: 'white' },
+    progressDotComplete: { background: '#238636', color: 'white' },
+    progressDotInactive: { background: '#30363d', color: '#8b949e' },
+    progressLabel: { fontSize: '10px', textAlign: 'center', color: '#8b949e' },
+    progressLabelActive: { color: '#58a6ff', fontWeight: 'bold' },
+    progressLine: { flex: 1, height: '2px', background: '#30363d', margin: '0 8px', marginBottom: '20px', maxWidth: '30px' },
+    progressLineComplete: { background: '#238636' },
     card: { background: '#161b22', padding: '20px', borderRadius: '12px', border: '1px solid #30363d', marginBottom: '16px' },
     input: { width: '100%', padding: '16px', border: '1px solid #30363d', borderRadius: '10px', background: '#0d1117', color: '#c9d1d9', fontSize: '17px', marginBottom: '16px' },
     button: { padding: '18px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', width: '100%', background: '#238636', color: 'white' },
@@ -108,13 +118,13 @@ export default function Booking() {
     // Get coordinates for special routing (Scottsdale north/south of Shea)
     const lat = result.geometry?.location?.lat;
     const lng = result.geometry?.location?.lng;
-    
+
     const detected = detectZone(result.address_components, lat, lng);
-    
+
     // Check if this is a supported location (not the default Gilbert fallback)
     let isSupported = false;
     let cityKey = null;
-    
+
     for (const [key, loc] of Object.entries(locationConfig)) {
       if (loc.name === detected?.name) {
         cityKey = key;
@@ -122,7 +132,7 @@ export default function Booking() {
         break;
       }
     }
-    
+
     // If no match found or it defaulted to Gilbert without being Gilbert, mark as unsupported
     if (!isSupported || (detected?.name === 'Gilbert' && !result.formatted_address.toLowerCase().includes('gilbert'))) {
       setUnsupportedLocation(true);
@@ -135,19 +145,26 @@ export default function Booking() {
       });
       return;
     }
-    
+
     // Special case for Scottsdale - use different keys based on routing
     if (detected?.routingNote?.includes('North of Shea')) {
       cityKey = 'scottsdaleDad';
     }
-    
-    setLocation({
+
+    const newLocation = {
       ...detected,
-      city: cityKey,  // Add city key for API calls
+      city: cityKey,
       name: detected?.name || cityKey,
       instructors: detected?.instructors || 'TBD',
       unsupported: false
-    });
+    };
+
+    setLocation(newLocation);
+
+    // Auto-advance to package selection
+    setTimeout(() => {
+      setStep(2);
+    }, 300);
   };
 
   const continueToPackages = () => {
@@ -287,12 +304,54 @@ export default function Booking() {
   const surcharge = violation ? 50 : 0;
   const total = (basePrice || 0) + surcharge;
 
+  // Progress bar component
+  const ProgressBar = ({ currentStep }) => {
+    const steps = [
+      { num: 1, label: 'Address' },
+      { num: 2, label: 'Package' },
+      { num: 3, label: 'Times' },
+      { num: 4, label: 'Pay' },
+      { num: 5, label: 'Info' }
+    ];
+
+    return (
+      <div style={styles.progressBar}>
+        {steps.map((s, idx) => (
+          <div key={s.num} style={{ display: 'flex', alignItems: 'center', flex: idx < steps.length - 1 ? 1 : 0 }}>
+            <div style={styles.progressStep}>
+              <div style={{
+                ...styles.progressDot,
+                ...(currentStep === s.num ? styles.progressDotActive :
+                   currentStep > s.num ? styles.progressDotComplete : styles.progressDotInactive)
+              }}>
+                {currentStep > s.num ? 'âœ“' : s.num}
+              </div>
+              <span style={{
+                ...styles.progressLabel,
+                ...(currentStep === s.num ? styles.progressLabelActive : {})
+              }}>{s.label}</span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div style={{
+                ...styles.progressLine,
+                ...(currentStep > s.num ? styles.progressLineComplete : {})
+              }} />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   // Step 1: Address
   if (step === 1) {
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
-        <div style={styles.header}><h1 style={styles.title}>Book Your Lessons</h1></div>
+        <div style={styles.header}>
+          <h1 style={styles.title}>Book Your Lessons</h1>
+        </div>
+        <ProgressBar currentStep={1} />
         <div style={styles.card}>
           <h2>Enter your address</h2>
           <input
@@ -321,13 +380,6 @@ export default function Booking() {
             </div>
           )}
 
-          {location && !location.unsupported && (
-            <div style={{background: '#1f2937', padding: '16px', borderRadius: '8px', marginBottom: '16px'}}>
-              <p><strong>Zone Detected:</strong> {location.name}</p>
-              <p style={{color: '#8b949e', fontSize: '14px'}}>Instructor: {location.instructors}</p>
-            </div>
-          )}
-
           {unsupportedLocation && (
             <div style={{background: '#da3633', color: 'white', padding: '20px', borderRadius: '8px', marginBottom: '16px', textAlign: 'center'}}>
               <p style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '12px'}}>Area Not Currently Available</p>
@@ -336,14 +388,6 @@ export default function Booking() {
               <p style={{fontSize: '14px', marginTop: '8px'}}>for all business inquiries</p>
             </div>
           )}
-
-          <button
-            style={{...styles.button, opacity: location && !location.unsupported ? 1 : 0.5}}
-            onClick={continueToPackages}
-            disabled={!location || location.unsupported}
-          >
-            {unsupportedLocation ? 'Area Not Available' : 'Continue >'}
-          </button>
         </div>
       </div>
     );
@@ -355,6 +399,7 @@ export default function Booking() {
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
         <div style={styles.header}><h1 style={styles.title}>{location.name}</h1><p>{location.instructors}</p></div>
+        <ProgressBar currentStep={2} />
         <div style={styles.card}>
           <h2>Select Package</h2>
           {Object.entries(packages).map(([key, p]) => (
@@ -375,20 +420,20 @@ export default function Booking() {
   // Step 3: Times
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
-
+    
     // Fetch real availability on first load
     if (realAvailability === null && !availLoading) {
       fetchRealAvailability();
     }
-
+    
     const selectedDates = new Set();
     times.forEach(t => {
       if (t) selectedDates.add(t.date);
     });
 
     // Use real availability if available, otherwise fallback to mock
-    const timeSlots = realAvailability && realAvailability.length > 0
-      ? realAvailability
+    const timeSlots = realAvailability && realAvailability.length > 0 
+      ? realAvailability 
       : mockTimes.map((t, i) => ({...t, index: i}));
 
     // Filter and add index if needed
@@ -400,7 +445,7 @@ export default function Booking() {
       const isPM = t.time.includes('pm');
       const isAfternoon = isPM && hour >= 1;
       const isMorning = !isPM || (isPM && hour === 12);
-
+      
       if (timeFilter === 'weekend') return day === 0 || day === 6;
       if (timeFilter === 'afternoon') return (day >= 1 && day <= 5) && isAfternoon;
       if (timeFilter === 'morning') return (day >= 1 && day <= 5) && isMorning;
@@ -416,6 +461,7 @@ export default function Booking() {
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
+        <ProgressBar currentStep={3} />
         <div style={styles.header}>
           <h1 style={styles.title}>{isComplete ? 'All Times Selected!' : `Select ${pkg.lessons} Times`}</h1>
           {!isComplete && <p style={{color: '#8b949e', fontSize: '14px'}}>1 lesson per week</p>}
@@ -483,18 +529,19 @@ export default function Booking() {
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
+        <ProgressBar currentStep={4} />
         <div style={styles.header}><h1 style={styles.title}>Complete Payment</h1></div>
         <div style={styles.card}>
           <p><strong>{location?.name}</strong> â€¢ {pkg.name}</p>
           {useSpecialPricing && <p style={{color: '#58a6ff', fontSize: '14px'}}>Special pricing for {location.name}</p>}
           <p style={styles.price}>${testMode ? '$1 TEST' : '$' + total}</p>
           {violation && !testMode && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
-          
+
           {/* Test Mode Toggle */}
           <div style={{marginBottom: '16px', padding: '12px', background: '#1f2937', borderRadius: '8px'}}>
             <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={testMode}
                 onChange={(e) => setTestMode(e.target.checked)}
                 style={{marginRight: '8px', width: '18px', height: '18px'}}
@@ -503,7 +550,7 @@ export default function Booking() {
             </label>
             <p style={{fontSize: '12px', color: '#8b949e', margin: '4px 0 0 24px'}}>For webhook testing only</p>
           </div>
-          
+
           <button style={{...styles.button, opacity: paymentLoading ? 0.7 : 1, background: testMode ? '#f0883e' : '#238636'}} onClick={handlePayment} disabled={paymentLoading}>
             {paymentLoading ? 'Loading...' : testMode ? 'Pay $1 (TEST) >' : `Pay $${total} >`}
           </button>
@@ -536,9 +583,9 @@ export default function Booking() {
     setStudentInfo(prev => ({ ...prev, [field]: value }));
   };
 
-  const canSubmit = studentInfo.firstName && studentInfo.lastName && studentInfo.phone && 
-    studentInfo.email && studentInfo.pickupAddress && studentInfo.birthdate && 
-    studentInfo.permitDuration && studentInfo.agreeReschedule && 
+  const canSubmit = studentInfo.firstName && studentInfo.lastName && studentInfo.phone &&
+    studentInfo.email && studentInfo.pickupAddress && studentInfo.birthdate &&
+    studentInfo.permitDuration && studentInfo.agreeReschedule &&
     studentInfo.agreeInfoCorrect && studentInfo.agreeValidPermit;
 
   const submitBooking = () => {
@@ -557,6 +604,7 @@ export default function Booking() {
   return (
     <div style={styles.container}>
       <Head><title>Book | DVDS</title></Head>
+      <ProgressBar currentStep={5} />
       <div style={styles.header}>
         <h1 style={styles.title}>Student Information</h1>
         <p style={{color: '#238636', fontWeight: 'bold'}}>[PAID]</p>
@@ -567,135 +615,135 @@ export default function Booking() {
         </p>
 
         <h3 style={{marginBottom: '12px', color: '#58a6ff'}}>Student Details *</h3>
-        <input 
-          placeholder="First Name *" 
-          style={styles.input} 
+        <input
+          placeholder="First Name *"
+          style={styles.input}
           value={studentInfo.firstName}
           onChange={(e) => updateStudentInfo('firstName', e.target.value)}
         />
-        <input 
-          placeholder="Last Name *" 
+        <input
+          placeholder="Last Name *"
           style={styles.input}
           value={studentInfo.lastName}
           onChange={(e) => updateStudentInfo('lastName', e.target.value)}
         />
-        <input 
-          placeholder="Phone *" 
-          type="tel" 
+        <input
+          placeholder="Phone *"
+          type="tel"
           style={styles.input}
           value={studentInfo.phone}
           onChange={(e) => updateStudentInfo('phone', e.target.value)}
         />
-        <input 
-          placeholder="Email *" 
-          type="email" 
+        <input
+          placeholder="Email *"
+          type="email"
           style={styles.input}
           value={studentInfo.email}
           onChange={(e) => updateStudentInfo('email', e.target.value)}
         />
-        <input 
-          placeholder="Student Birthdate (MM/DD/YYYY) *" 
+        <input
+          placeholder="Student Birthdate (MM/DD/YYYY) *"
           style={styles.input}
           value={studentInfo.birthdate}
           onChange={(e) => updateStudentInfo('birthdate', e.target.value)}
         />
 
         <h3 style={{margin: '20px 0 12px', color: '#58a6ff'}}>Lesson Details *</h3>
-        <input 
-          placeholder="How many lessons did you purchase? *" 
+        <input
+          placeholder="How many lessons did you purchase? *"
           style={styles.input}
           value={studentInfo.lessonCount}
           onChange={(e) => updateStudentInfo('lessonCount', e.target.value)}
         />
-        <input 
-          placeholder="How long has student had their permit? *" 
+        <input
+          placeholder="How long has student had their permit? *"
           style={styles.input}
           value={studentInfo.permitDuration}
           onChange={(e) => updateStudentInfo('permitDuration', e.target.value)}
         />
-        <input 
-          placeholder="Pickup Address * (double check spelling)" 
+        <input
+          placeholder="Pickup Address * (double check spelling)"
           style={styles.input}
           value={studentInfo.pickupAddress}
           onChange={(e) => updateStudentInfo('pickupAddress', e.target.value)}
         />
-        <input 
-          placeholder="How did you find us?" 
+        <input
+          placeholder="How did you find us?"
           style={styles.input}
           value={studentInfo.howDidYouFindUs}
           onChange={(e) => updateStudentInfo('howDidYouFindUs', e.target.value)}
         />
 
         <h3 style={{margin: '20px 0 12px', color: '#58a6ff'}}>Additional Information</h3>
-        <input 
-          placeholder="Gate code (if applicable)" 
+        <input
+          placeholder="Gate code (if applicable)"
           style={styles.input}
           value={studentInfo.gateCode}
           onChange={(e) => updateStudentInfo('gateCode', e.target.value)}
         />
-        <input 
-          placeholder="Additional phone number" 
+        <input
+          placeholder="Additional phone number"
           type="tel"
           style={styles.input}
           value={studentInfo.altPhone}
           onChange={(e) => updateStudentInfo('altPhone', e.target.value)}
         />
-        <input 
-          placeholder="Alternate pickup address for specific dates" 
+        <input
+          placeholder="Alternate pickup address for specific dates"
           style={styles.input}
           value={studentInfo.altPickupAddress}
           onChange={(e) => updateStudentInfo('altPickupAddress', e.target.value)}
         />
-        <textarea 
-          placeholder="Additional notes for instructor" 
+        <textarea
+          placeholder="Additional notes for instructor"
           style={{...styles.input, minHeight: '80px'}}
           value={studentInfo.notes}
           onChange={(e) => updateStudentInfo('notes', e.target.value)}
         />
 
         <h3 style={{margin: '20px 0 12px', color: '#58a6ff'}}>Agreements *</h3>
-        
+
         <label style={{display: 'flex', alignItems: 'flex-start', marginBottom: '12px', cursor: 'pointer'}}>
-          <input 
-            type="checkbox" 
+          <input
+            type="checkbox"
             checked={studentInfo.agreeReschedule}
             onChange={(e) => updateStudentInfo('agreeReschedule', e.target.checked)}
             style={{marginRight: '8px', marginTop: '4px', width: '18px', height: '18px'}}
           />
           <span style={{fontSize: '14px', lineHeight: '1.4'}}>
-            I understand that we need 2 days notice to reschedule a lesson for free. 
+            I understand that we need 2 days notice to reschedule a lesson for free.
             Less than 2 days notice is a $75 rescheduling fee. *
           </span>
         </label>
 
         <label style={{display: 'flex', alignItems: 'flex-start', marginBottom: '12px', cursor: 'pointer'}}>
-          <input 
-            type="checkbox" 
+          <input
+            type="checkbox"
             checked={studentInfo.agreeInfoCorrect}
             onChange={(e) => updateStudentInfo('agreeInfoCorrect', e.target.checked)}
             style={{marginRight: '8px', marginTop: '4px', width: '18px', height: '18px'}}
           />
           <span style={{fontSize: '14px', lineHeight: '1.4'}}>
-            I agree that if any information above is incorrect and the instructor is late, 
+            I agree that if any information above is incorrect and the instructor is late,
             we won't be able to make up the time. *
           </span>
         </label>
 
         <label style={{display: 'flex', alignItems: 'flex-start', marginBottom: '20px', cursor: 'pointer'}}>
-          <input 
-            type="checkbox" 
+          <input
+            type="checkbox"
             checked={studentInfo.agreeValidPermit}
             onChange={(e) => updateStudentInfo('agreeValidPermit', e.target.checked)}
             style={{marginRight: '8px', marginTop: '4px', width: '18px', height: '18px'}}
           />
           <span style={{fontSize: '14px', lineHeight: '1.4'}}>
-            I agree the student has a valid Arizona permit. If student does not have a valid 
+            I agree the student has a valid Arizona permit. If student does not have a valid
             Arizona permit at the time of lesson, the class will be cancelled with no refund. *
           </span>
         </label>
 
-        <button 
-          style={{...styles.button, opacity: canSubmit ? 1 : 0.5, background: canSubmit ? '#238636' : '#30363d'}} 
+        <button
+          style={{...styles.button, opacity: canSubmit ? 1 : 0.5, background: canSubmit ? '#238636' : '#30363d'}}
           onClick={submitBooking}
           disabled={!canSubmit}
         >
