@@ -89,29 +89,25 @@ export default async function handler(request) {
     if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
       const session = event.data?.object || event.data;
       
-      // Get client_reference_id which contains our booking ID
-      const bookingId = session.client_reference_id;
+      // Get customer email for matching
+      const customerEmail = session.customer_details?.email || session.customer_email;
       
       console.log('Webhook received:', { 
         type: event.type, 
-        bookingId: bookingId,
-        customer: session.customer_details?.name || session.customer_email
+        customer: session.customer_details?.name || session.customer_email,
+        email: customerEmail
       });
 
-      // Fetch booking data from our store API
+      // Try to find booking data by customer email (stored before payment)
       let bookingData = {};
-      if (bookingId) {
-        try {
-          const lookupRes = await fetch(`${API_BASE}/api/store-booking?id=${bookingId}`);
-          if (lookupRes.ok) {
-            bookingData = await lookupRes.json();
-            console.log('Retrieved booking data:', bookingData);
-          } else {
-            console.error('Failed to lookup booking:', await lookupRes.text());
-          }
-        } catch (err) {
-          console.error('Error looking up booking:', err);
+      try {
+        const lookupRes = await fetch(`${API_BASE}/api/store-booking?email=${encodeURIComponent(customerEmail || '')}`);
+        if (lookupRes.ok) {
+          bookingData = await lookupRes.json();
+          console.log('Retrieved booking data by email:', bookingData);
         }
+      } catch (err) {
+        console.log('No booking data found for email:', customerEmail);
       }
 
       const {
