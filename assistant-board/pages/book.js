@@ -258,7 +258,7 @@ export default function Booking() {
               <div style={{color: '#8b949e'}}>{p.lessons} lessons, {p.hours} hrs</div>
             </div>
           ))}
-          {pkg && <button style={styles.button} onClick={() => setStep(3)}>Select {pkg.lessons} Times &gt;</button>}
+          {pkg && <button style={styles.button} onClick={() => { fetchAvailability(); setStep(3); }}>Select {pkg.lessons} Times &gt;</button>}
         </div>
       </div>
     );
@@ -268,12 +268,10 @@ export default function Booking() {
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
     
-    // Fetch availability when step loads
-    useState(() => {
-      if (availability.length === 0) {
-        fetchAvailability();
-      }
-    });
+    // Fetch availability when step loads - use useEffect pattern with useState hack for Next.js
+    if (typeof window !== 'undefined' && availability.length === 0 && !availLoading) {
+      fetchAvailability();
+    }
     
     const selectedDates = new Set();
     times.forEach(t => {
