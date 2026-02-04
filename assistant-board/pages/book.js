@@ -48,24 +48,96 @@ const mockTimes = generateMockTimes();
 
 export default function Booking() {
   const [step, setStep] = useState(1);
-  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [location, setLocation] = useState(null);
   const [pkg, setPkg] = useState(null);
   const [times, setTimes] = useState([]);
   const [timeFilter, setTimeFilter] = useState('all');
+  const [loading, setLoading] = useState(false);
 
-  const detectLocation = () => {
-    const input = city.toLowerCase();
-    if (input.includes('gilbert')) setLocation(locations.gilbert);
-    else if (input.includes('chandler')) setLocation(locations.chandler);
-    else if (input.includes('mesa')) setLocation(locations.mesa);
-    else if (input.includes('scottsdale')) setLocation(locations.scottsdale);
-    else if (input.includes('tempe')) setLocation(locations.tempe);
-    else if (input.includes('anthem')) setLocation(locations.anthem);
-    else if (input.includes('glendale')) setLocation(locations.glendale);
-    else if (input.includes('peoria')) setLocation(locations.peoria);
-    else setLocation(locations.gilbert);
-    setStep(2);
+  // Zone mapping by zip code prefixes/locations
+  const detectZone = (zipCode, cityName) => {
+    const zip = zipCode?.toString() || '';
+    const city = cityName?.toLowerCase() || '';
+    
+    // Gilbert/Chandler/Mesa - East Valley (Aaron/Ryan)
+    if (zip.startsWith('852') || city.includes('gilbert') || city.includes('chandler') || city.includes('mesa') || city.includes('queen creek') || city.includes('san tan')) {
+      return locations.gilbert;
+    }
+    // Scottsdale - Austen
+    if (zip.startsWith('8525') || zip.startsWith('8526') || city.includes('scottsdale') || city.includes('paradise valley')) {
+      return locations.scottsdale;
+    }
+    // Tempe - Austen
+    if (zip.startsWith('8528') || city.includes('tempe')) {
+      return locations.tempe;
+    }
+    // Anthem/New River - Austen
+    if (zip.startsWith('85086') || zip.startsWith('85087') || city.includes('anthem') || city.includes('new river')) {
+      return locations.anthem;
+    }
+    // Glendale - Dad
+    if (zip.startsWith('853') || city.includes('glendale')) {
+      return locations.glendale;
+    }
+    // Peoria - Dad
+    if (zip.startsWith('85345') || zip.startsWith('85381') || city.includes('peoria')) {
+      return locations.peoria;
+    }
+    // Phoenix zones - need more specific logic
+    if (city.includes('phoenix')) {
+      // North Phoenix - Austen
+      if (zip.startsWith('8505') || zip.startsWith('8506') || zip.startsWith('8508')) {
+        return locations.anthem; // Use anthem as north phoenix
+      }
+      // Default to Scottsdale for central Phoenix
+      return locations.scottsdale;
+    }
+    
+    // Default
+    return locations.gilbert;
+  };
+
+  // Google Geocoding API key
+  const GOOGLE_KEY = 'AIzaSyA5_sfMn_rDEw1eM3uGFBE3XxblPiXgZRQ';
+
+  const searchAddress = async (query) => {
+    if (!query || query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query + ', Arizona')}&key=${GOOGLE_KEY}`);
+      const data = await res.json();
+      if (data.results) {
+        setSuggestions(data.results.slice(0, 5));
+      }
+    } catch (e) {
+      console.error('Geocode error:', e);
+    }
+  };
+
+  const selectAddress = (result) => {
+    setAddress(result.formatted_address);
+    setSuggestions([]);
+    
+    // Extract zip and city from address components
+    let zipCode = '';
+    let cityName = '';
+    
+    result.address_components?.forEach(comp => {
+      if (comp.types.includes('postal_code')) zipCode = comp.long_name;
+      if (comp.types.includes('locality')) cityName = comp.long_name;
+    });
+    
+    const detected = detectZone(zipCode, cityName);
+    setLocation(detected);
+  };
+
+  const continueToPackages = () => {
+    if (location) setStep(2);
   };
 
   const styles = {
@@ -82,16 +154,52 @@ export default function Booking() {
     timeSelected: { borderColor: '#238636', background: '#238636', color: 'white' }
   };
 
-  // Step 1: City
+  // Step 1: Address with autocomplete
   if (step === 1) {
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
         <div style={styles.header}><h1 style={styles.title}>Book Your Lessons</h1></div>
         <div style={styles.card}>
-          <h2>Where are you located?</h2>
-          <input placeholder="e.g. Gilbert, AZ" style={styles.input} value={city} onChange={e => setCity(e.target.value)} />
-          <button style={styles.button} onClick={detectLocation}>Continue &gt;</button>
+          <h2>Enter your address</h2>
+          <input 
+            placeholder="Start typing your address..." 
+            style={styles.input} 
+            value={address} 
+            onChange={e => {
+              setAddress(e.target.value);
+              searchAddress(e.target.value);
+            }}
+          />
+          
+          {suggestions.length > 0 && (
+            <div style={{marginBottom: '16px', border: '1px solid #30363d', borderRadius: '8px', overflow: 'hidden'}}>
+              {suggestions.map((s, i) => (
+                <div 
+                  key={i}
+                  style={{padding: '12px', borderBottom: '1px solid #30363d', cursor: 'pointer', background: '#0d1117'}}
+                  onClick={() => selectAddress(s)}
+                >
+                  {s.formatted_address}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {location && (
+            <div style={{background: '#1f2937', padding: '16px', borderRadius: '8px', marginBottom: '16px'}}>
+              <p><strong>Zone Detected:</strong> {location.name}</p>
+              <p style={{color: '#8b949e', fontSize: '14px'}}>Instructor: {location.instructors}</p>
+            </div>
+          )}
+          
+          <button 
+            style={{...styles.button, opacity: location ? 1 : 0.5}} 
+            onClick={continueToPackages}
+            disabled={!location}
+          >
+            Continue &gt;
+          </button>
         </div>
       </div>
     );
