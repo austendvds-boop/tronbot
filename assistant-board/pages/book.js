@@ -2,10 +2,10 @@ import { useState } from 'react';
 import Head from 'next/head';
 
 const packages = {
-  ultimate: { name: 'Ultimate Package', price: 1299, lessons: 8, hours: 20 },
-  license: { name: 'License Ready Package', price: 680, lessons: 4, hours: 10 },
-  intro: { name: 'Intro to Driving', price: 350, lessons: 2, hours: 5 },
-  express: { name: 'Express Lesson', price: 200, lessons: 1, hours: 2.5 }
+  ultimate: { name: 'Ultimate Package', price: 1299, lessons: 8, hours: 20, stripeBase: 'https://buy.stripe.com/5kQ6oI8EP6BW4dBaT02ZO1f', stripeUpcharge: 'https://buy.stripe.com/dRm7sM8EP5xS39x5yG2ZO1d' },
+  license: { name: 'License Ready Package', price: 680, lessons: 4, hours: 10, stripeBase: 'https://buy.stripe.com/aFaeVe8EP4tO5hF9OW2ZO1b', stripeUpcharge: 'https://buy.stripe.com/bJedRa6wH2lGh0n2mu2ZO1c' },
+  intro: { name: 'Intro to Driving', price: 350, lessons: 2, hours: 5, stripeBase: 'https://buy.stripe.com/00w9AUaMX2lG5hF4uC2ZO1g', stripeUpcharge: 'https://buy.stripe.com/cNi3cwdZ99O86lJaT02ZO1h' },
+  express: { name: 'Express Lesson', price: 200, lessons: 1, hours: 2.5, stripeBase: 'https://buy.stripe.com/00wbJ2dZ9gcweSf1iq2ZO1i', stripeUpcharge: null }
 };
 
 const locations = {
@@ -224,6 +224,22 @@ export default function Booking() {
 
   // Step 4: Pay
   if (step === 4 && pkg) {
+    // Check if Dad's location (not set up yet)
+    if (location?.account === 'dad') {
+      return (
+        <div style={styles.container}>
+          <Head><title>Book | DVDS</title></Head>
+          <div style={styles.header}><h1 style={styles.title}>Coming Soon</h1></div>
+          <div style={styles.card}>
+            <p>Online booking for {location.name} is coming soon!</p>
+            <p>Please call or text to book:</p>
+            <p style={{fontSize: '24px', fontWeight: 'bold', color: '#58a6ff'}}>(602) 434-7209</p>
+            <button style={styles.button} onClick={() => setStep(1)}>Start Over</button>
+          </div>
+        </div>
+      );
+    }
+
     let violation = false;
     for (let i = 0; i < times.length; i++) {
       for (let j = i + 1; j < times.length; j++) {
@@ -246,7 +262,10 @@ export default function Booking() {
           <p><strong>{location?.name}</strong> â€¢ {pkg.name}</p>
           <p style={styles.price}>${total}</p>
           {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
-          <button style={styles.button} onClick={() => {alert(`Paid $${total}!`); setStep(5);}}>
+          <button style={styles.button} onClick={() => {
+            const stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
+            window.location.href = stripeUrl;
+          }}>
             Pay ${total} &gt;
           </button>
         </div>
