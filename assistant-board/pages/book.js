@@ -99,7 +99,11 @@ export default function Booking() {
     setAddress(result.formatted_address);
     setSuggestions([]);
 
-    const detected = detectZone(result.address_components);
+    // Get coordinates for special routing (Scottsdale north/south of Shea)
+    const lat = result.geometry?.location?.lat;
+    const lng = result.geometry?.location?.lng;
+    
+    const detected = detectZone(result.address_components, lat, lng);
     
     // Find the city key from the config
     let cityKey = null;
@@ -108,6 +112,11 @@ export default function Booking() {
         cityKey = key;
         break;
       }
+    }
+    
+    // Special case for Scottsdale - use different keys based on routing
+    if (detected?.routingNote?.includes('North of Shea')) {
+      cityKey = 'scottsdaleDad';
     }
     
     setLocation({
