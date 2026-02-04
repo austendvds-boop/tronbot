@@ -45,6 +45,9 @@ const generateMockTimes = () => {
 
 const mockTimes = generateMockTimes();
 
+// Google Geocoding API key
+const GOOGLE_KEY = 'AIzaSyA5_sfMn_rDEw1eM3uGFBE3XxblPiXgZRQ';
+
 export default function Booking() {
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState('');
@@ -53,16 +56,25 @@ export default function Booking() {
   const [pkg, setPkg] = useState(null);
   const [times, setTimes] = useState([]);
   const [timeFilter, setTimeFilter] = useState('all');
-  const [loading, setLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
 
-  // Use shared location config
+  const styles = {
+    container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
+    header: { textAlign: 'center', marginBottom: '20px' },
+    title: { fontSize: '26px', fontWeight: '700' },
+    card: { background: '#161b22', padding: '20px', borderRadius: '12px', border: '1px solid #30363d', marginBottom: '16px' },
+    input: { width: '100%', padding: '16px', border: '1px solid #30363d', borderRadius: '10px', background: '#0d1117', color: '#c9d1d9', fontSize: '17px', marginBottom: '16px' },
+    button: { padding: '18px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', width: '100%', background: '#238636', color: 'white' },
+    package: { padding: '18px', borderRadius: '10px', border: '2px solid #30363d', marginBottom: '12px', cursor: 'pointer' },
+    pkgSelected: { borderColor: '#238636', background: '#1f2937' },
+    price: { fontSize: '28px', fontWeight: 'bold', color: '#58a6ff' },
+    timeBtn: { padding: '14px', borderRadius: '8px', border: '2px solid #30363d', background: '#0d1117', color: '#c9d1d9', cursor: 'pointer', fontSize: '15px' },
+    timeSelected: { borderColor: '#238636', background: '#238636', color: 'white' }
+  };
+
   const detectZone = (addressComponents) => {
     return detectLocationFromAddress(addressComponents);
   };
-
-  // Google Geocoding API key
-  const GOOGLE_KEY = 'AIzaSyA5_sfMn_rDEw1eM3uGFBE3XxblPiXgZRQ';
 
   const searchAddress = async (query) => {
     if (!query || query.length < 3) {
@@ -87,11 +99,10 @@ export default function Booking() {
     
     const detected = detectZone(result.address_components);
     
-    // Get full location info from config
     const cityKey = detected?.city;
     const account = detected?.account;
     const locationData = account === 'dad' 
-      ? locationConfig.dad?.[cityKey] || locationConfig[cityKey]
+      ? locationConfig[cityKey]
       : locationConfig[cityKey];
     
     setLocation({
@@ -105,21 +116,80 @@ export default function Booking() {
     if (location) setStep(2);
   };
 
-  const styles = {
-    container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
-    header: { textAlign: 'center', marginBottom: '20px' },
-    title: { fontSize: '26px', fontWeight: '700' },
-    card: { background: '#161b22', padding: '20px', borderRadius: '12px', border: '1px solid #30363d', marginBottom: '16px' },
-    input: { width: '100%', padding: '16px', border: '1px solid #30363d', borderRadius: '10px', background: '#0d1117', color: '#c9d1d9', fontSize: '17px', marginBottom: '16px' },
-    button: { padding: '18px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', width: '100%', background: '#238636', color: 'white' },
-    package: { padding: '18px', borderRadius: '10px', border: '2px solid #30363d', marginBottom: '12px', cursor: 'pointer' },
-    pkgSelected: { borderColor: '#238636', background: '#1f2937' },
-    price: { fontSize: '28px', fontWeight: 'bold', color: '#58a6ff' },
-    timeBtn: { padding: '14px', borderRadius: '8px', border: '2px solid #30363d', background: '#0d1117', color: '#c9d1d9', cursor: 'pointer', fontSize: '15px' },
-    timeSelected: { borderColor: '#238636', background: '#238636', color: 'white' }
+  // Calculate violation for times
+  let violation = false;
+  for (let i = 0; i < times.length; i++) {
+    for (let j = i + 1; j < times.length; j++) {
+      const t1 = mockTimes[times[i]];
+      const t2 = mockTimes[times[j]];
+      if (t1 && t2) {
+        const diff = Math.abs((new Date(t1.date) - new Date(t2.date)) / (1000 * 60 * 60 * 24));
+        if (diff < 7) violation = true;
+      }
+    }
+  }
+
+  // Get packages based on location
+  const packages = location?.account === 'dad' ? dadPackages : austenPackages;
+
+  // Payment handler
+  const handlePayment = async () => {
+    if (!pkg || !location) return;
+    
+    setPaymentLoading(true);
+    
+    const selectedTimes = times.map(idx => {
+      const t = mockTimes[idx];
+      const date = new Date(t.date + 'T' + t.time.replace('am', ':00').replace('pm', ':00'));
+      return date.toISOString();
+    });
+    
+    const isSpecialLocation = location?.name === 'Casa Grande' || location?.name === 'West Valley';
+    const isLicensePackage = pkg.name === 'License Ready Package';
+    const useSpecialPricing = isSpecialLocation && isLicensePackage && pkg.stripeSpecialBase;
+    
+    const basePrice = useSpecialPricing ? pkg.specialPrice : pkg.price;
+    const surcharge = violation ? 50 : 0;
+    const total = basePrice + surcharge;
+    
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        account: location?.account,
+        package: pkg.name,
+        amount: total * 100,
+        location: location?.name,
+        selectedTimes,
+        customerEmail: '',
+        customerName: ''
+      })
+    });
+    
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      // Fallback to Payment Link
+      let stripeUrl;
+      if (useSpecialPricing) {
+        stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
+      } else {
+        stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
+      }
+      window.location.href = stripeUrl;
+    }
   };
 
-  // Step 1: Address with autocomplete
+  // Calculate pricing
+  const isSpecialLocation = location?.name === 'Casa Grande' || location?.name === 'West Valley';
+  const isLicensePackage = pkg?.name === 'License Ready Package';
+  const useSpecialPricing = isSpecialLocation && isLicensePackage && pkg?.stripeSpecialBase;
+  const basePrice = useSpecialPricing ? pkg?.specialPrice : pkg?.price;
+  const surcharge = violation ? 50 : 0;
+  const total = (basePrice || 0) + surcharge;
+
+  // Step 1: Address
   if (step === 1) {
     return (
       <div style={styles.container}>
@@ -172,9 +242,6 @@ export default function Booking() {
 
   // Step 2: Package
   if (step === 2) {
-    // Use Dad's packages for Dad's locations, otherwise Austen's
-    const packages = location?.account === 'dad' ? dadPackages : austenPackages;
-    
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
@@ -200,29 +267,12 @@ export default function Booking() {
   if (step === 3 && pkg) {
     const isComplete = times.length === pkg.lessons;
     
-    // Check for violations
-    let violation = false;
-    for (let i = 0; i < times.length; i++) {
-      for (let j = i + 1; j < times.length; j++) {
-        const t1 = mockTimes[times[i]];
-        const t2 = mockTimes[times[j]];
-        if (t1 && t2) {
-          const d1 = new Date(t1.date);
-          const d2 = new Date(t2.date);
-          const diff = Math.abs((d1 - d2) / (1000 * 60 * 60 * 24));
-          if (diff < 7) violation = true;
-        }
-      }
-    }
-
-    // Get selected dates
     const selectedDates = new Set();
     times.forEach(idx => {
       const t = mockTimes[idx];
       if (t) selectedDates.add(t.date);
     });
 
-    // Filter times
     const filteredTimes = mockTimes.map((t, i) => ({...t, index: i})).filter(t => {
       if (selectedDates.has(t.date) && !times.includes(t.index)) return false;
       const date = new Date(t.date);
@@ -300,84 +350,6 @@ export default function Booking() {
 
   // Step 4: Pay
   if (step === 4 && pkg) {
-    // Get full location config
-    const locationConfig = location?.city ? (location.account === 'dad' ? dadPackages : austenPackages) : null;
-    
-    // Check if Dad's location (we have his links now!)
-    if (!location || !location.account) {
-      return (
-        <div style={styles.container}>
-          <Head><title>Book | DVDS</title></Head>
-          <div style={styles.header}><h1 style={styles.title}>Location Error</h1></div>
-          <div style={styles.card}>
-            <p>Could not detect location. Please go back and enter your address.</p>
-            <button style={styles.button} onClick={() => setStep(1)}>Start Over</button>
-          </div>
-        </div>
-      );
-    }
-
-    let violation = false;
-    for (let i = 0; i < times.length; i++) {
-      for (let j = i + 1; j < times.length; j++) {
-        const t1 = mockTimes[times[i]];
-        const t2 = mockTimes[times[j]];
-        if (t1 && t2) {
-          const diff = Math.abs((new Date(t1.date) - new Date(t2.date)) / (1000 * 60 * 60 * 24));
-          if (diff < 7) violation = true;
-        }
-      }
-    }
-    
-    // Check for special pricing locations (Casa Grande, West Valley)
-    const isSpecialLocation = location?.name === 'Casa Grande' || location?.name === 'West Valley';
-    const isLicensePackage = pkg.name === 'License Ready Package';
-    const useSpecialPricing = isSpecialLocation && isLicensePackage && pkg.stripeSpecialBase;
-    
-    const basePrice = useSpecialPricing ? pkg.specialPrice : pkg.price;
-    const surcharge = violation ? 50 : 0;
-    const total = basePrice + surcharge;
-
-    const handlePayment = async () => {
-      setPaymentLoading(true);
-      
-      // Get selected times as ISO strings
-      const selectedTimes = times.map(idx => {
-        const t = mockTimes[idx];
-        const date = new Date(t.date + 'T' + t.time.replace('am', ':00').replace('pm', ':00'));
-        return date.toISOString();
-      });
-      
-      // Create checkout session
-      const res = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          account: location?.account,
-          package: pkg.name,
-          amount: total * 100, // cents
-          location: location?.name,
-          selectedTimes,
-          customerEmail: '', // Will be collected by Stripe
-          customerName: ''
-        })
-      });
-      
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        // Fallback to Payment Link if API fails
-        let stripeUrl;
-        if (useSpecialPricing) {
-          stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
-        } else {
-          stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
-        }
-        window.location.href = stripeUrl;
-      }
-    };
-
     return (
       <div style={styles.container}>
         <Head><title>Book | DVDS</title></Head>
