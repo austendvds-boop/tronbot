@@ -253,6 +253,8 @@ export default function Booking() {
             value={address}
             onChange={e => {
               setAddress(e.target.value);
+              setUnsupportedLocation(false);
+              setLocation(null);
               searchAddress(e.target.value);
             }}
           />
