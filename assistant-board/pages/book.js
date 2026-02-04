@@ -206,10 +206,46 @@ export default function Booking() {
     setAvailLoading(false);
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!pkg || !location) return;
 
     setPaymentLoading(true);
+
+    // Prepare booking data
+    const bookingData = {
+      account: location.account,
+      city: location.city,
+      locationName: location.name,
+      packageType: pkg.name,
+      packageName: pkg.name,
+      selectedTimes: JSON.stringify(times),
+      customerName: studentInfo.firstName + ' ' + studentInfo.lastName,
+      customerEmail: studentInfo.email,
+      customerPhone: studentInfo.phone,
+      studentFirstName: studentInfo.firstName,
+      studentLastName: studentInfo.lastName,
+      studentPhone: studentInfo.phone,
+      pickupAddress: studentInfo.pickupAddress,
+      birthdate: studentInfo.birthdate,
+      permitDuration: studentInfo.permitDuration,
+      notes: studentInfo.notes
+    };
+
+    // Store booking data and get booking ID
+    let bookingId = null;
+    try {
+      const res = await fetch('/api/store-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        bookingId = data.bookingId;
+      }
+    } catch (e) {
+      console.error('Failed to store booking:', e);
+    }
 
     const isSpecialLocation = location?.name === 'Casa Grande' || location?.name === 'West Valley';
     const isLicensePackage = pkg.name === 'License Ready Package';
@@ -226,12 +262,17 @@ export default function Booking() {
       stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
     }
 
-    // Store selected times in localStorage for webhook to pick up
+    // Append booking ID as client_reference_id for webhook to retrieve
+    if (bookingId) {
+      stripeUrl += `?client_reference_id=${encodeURIComponent(bookingId)}`;
+    }
+
+    // Also store in localStorage as backup
     if (typeof window !== 'undefined') {
       localStorage.setItem('dvds_pending_booking', JSON.stringify({
-        times: times,
-        location: location,
-        package: pkg
+        ...bookingData,
+        bookingId: bookingId,
+        status: 'payment_pending'
       }));
     }
 
