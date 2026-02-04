@@ -434,26 +434,51 @@ export default function Booking() {
       ? realAvailability
       : mockTimes.map((t, i) => ({...t, index: i}));
 
+    // Parse time for filtering (handles "11:30am" or "2:30pm")
+    const parseTime = (timeStr) => {
+      const match = timeStr.match(/(\d+):(\d+)(am|pm)/i);
+      if (!match) return null;
+      let hour = parseInt(match[1]);
+      const minute = parseInt(match[2]);
+      const period = match[3].toLowerCase();
+      if (period === 'pm' && hour !== 12) hour += 12;
+      if (period === 'am' && hour === 12) hour = 0;
+      return { hour, minute, totalMinutes: hour * 60 + minute };
+    };
+
     // Filter and add index if needed
     const filteredTimes = timeSlots.map((t, i) => ({...t, index: t.index ?? i})).filter(t => {
       if (selectedDates.has(t.date)) return false;
       const date = new Date(t.date);
       const day = date.getDay();
-      const hour = parseInt(t.time);
-      const isPM = t.time.includes('pm');
-      const isAfternoon = isPM && hour >= 1;
-      const isMorning = !isPM || (isPM && hour === 12);
+      const timeParsed = parseTime(t.time);
+      if (!timeParsed) return true;
+      
+      const totalMinutes = timeParsed.totalMinutes;
+      const isWeekend = day === 0 || day === 6;
+      const isWeekday = day >= 1 && day <= 5;
+      const isMorning = totalMinutes < 720; // Before 12:00 PM (720 min)
+      const isAfternoon = totalMinutes >= 720 && totalMinutes < 870; // 12:00 PM - 2:30 PM
+      const isAfterSchool = totalMinutes >= 870; // After 2:30 PM (870 min)
 
-      if (timeFilter === 'weekend') return day === 0 || day === 6;
-      if (timeFilter === 'afternoon') return (day >= 1 && day <= 5) && isAfternoon;
-      if (timeFilter === 'morning') return (day >= 1 && day <= 5) && isMorning;
+      if (timeFilter === 'weekend') return isWeekend;
+      if (timeFilter === 'afterschool') return isWeekday && isAfterSchool;
+      if (timeFilter === 'afternoon') return isWeekday && (isAfternoon || isAfterSchool);
+      if (timeFilter === 'morning') return isWeekday && isMorning;
       return true;
     });
 
+    // Sort by date/time for "fastest" options
+    const sortedTimes = [...filteredTimes].sort((a, b) => {
+      const dateA = new Date(a.date + 'T' + a.time.replace(/(am|pm)/, ''));
+      const dateB = new Date(b.date + 'T' + b.time.replace(/(am|pm)/, ''));
+      return dateA - dateB;
+    });
+
     const tabStyle = (active) => ({
-      flex: 1, padding: '12px 4px', border: 'none', borderRadius: '8px',
+      flex: 1, padding: '10px 4px', border: 'none', borderRadius: '8px',
       background: active ? '#238636' : '#30363d', color: 'white',
-      fontWeight: 'bold', fontSize: '12px', cursor: 'pointer'
+      fontWeight: 'bold', fontSize: '11px', cursor: 'pointer'
     });
 
     return (
@@ -482,20 +507,69 @@ export default function Booking() {
               {realAvailability && realAvailability.length === 0 && (
                 <p style={{color: '#8b949e', fontSize: '14px', marginBottom: '12px'}}>Showing sample times (Acuity data unavailable)</p>
               )}
-              <div style={{display: 'flex', gap: '8px', marginBottom: '16px'}}>
+              {/* Time Filter Tabs */}
+              <div style={{display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap'}}>
                 <button style={tabStyle(timeFilter === 'all')} onClick={() => setTimeFilter('all')}>All</button>
-                <button style={tabStyle(timeFilter === 'morning')} onClick={() => setTimeFilter('morning')}>Morning M-F</button>
-                <button style={tabStyle(timeFilter === 'afternoon')} onClick={() => setTimeFilter('afternoon')}>Afternoon M-F</button>
-                <button style={tabStyle(timeFilter === 'weekend')} onClick={() => setTimeFilter('weekend')}>Weekend</button>
+                <button style={tabStyle(timeFilter === 'morning')} onClick={() => setTimeFilter('morning')}>ðŸŒ… Morning</button>
+                <button style={tabStyle(timeFilter === 'afterschool')} onClick={() => setTimeFilter('afterschool')}>ðŸ« After School</button>
+                <button style={tabStyle(timeFilter === 'weekend')} onClick={() => setTimeFilter('weekend')}>ðŸŽ¯ Weekend</button>
               </div>
+
+              {/* Morning Pickup Alert */}
+              {timeFilter === 'morning' && (
+                <div style={{background: '#1f6feb', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px'}}>
+                  <strong>ðŸšŒ School Drop-off Available!</strong>
+                  <p style={{margin: '4px 0 0 0'}}>We can pick up from home and drop off at high school for morning lessons.</p>
+                </div>
+              )}
+
+              {/* After School Info */}
+              {timeFilter === 'afterschool' && (
+                <div style={{background: '#238636', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px'}}>
+                  <strong>ðŸ« After School Schedule</strong>
+                  <p style={{margin: '4px 0 0 0'}}>Lessons starting after 2:30 PM - perfect for after school!</p>
+                </div>
+              )}
+
+              {/* Fastest Available Alert */}
+              {sortedTimes.length > 0 && timeFilter === 'all' && (
+                <div style={{background: '#8957e5', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <div>
+                    <strong>âš¡ Fastest Available</strong>
+                    <p style={{margin: '4px 0 0 0'}}>{new Date(sortedTimes[0].date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})} at {sortedTimes[0].time}</p>
+                  </div>
+                  <button 
+                    style={{background: 'white', color: '#8957e5', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px'}}
+                    onClick={() => {
+                      if (times.length < pkg.lessons) {
+                        const t = sortedTimes[0];
+                        setTimes([...times, {date: t.date, time: t.time}]);
+                      }
+                    }}
+                    disabled={times.length >= pkg.lessons || times.some(selected => selected.date === sortedTimes[0].date && selected.time === sortedTimes[0].time)}
+                  >
+                    Select
+                  </button>
+                </div>
+              )}
 
               <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px'}}>
                 {filteredTimes.map((t) => {
                   const isSelected = times.some(selected => selected.date === t.date && selected.time === t.time);
+                  const timeParsed = parseTime(t.time);
+                  const isAfterSchool = timeParsed && timeParsed.totalMinutes >= 870; // After 2:30 PM
+                  const date = new Date(t.date);
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                  
                   return (
                     <button
                       key={t.index}
-                      style={{...styles.timeBtn, ...(isSelected && styles.timeSelected)}}
+                      style={{
+                        ...styles.timeBtn, 
+                        ...(isSelected && styles.timeSelected),
+                        ...(isAfterSchool && !isSelected && {borderColor: '#238636', background: '#0d1117'}),
+                        ...(isWeekend && !isSelected && {borderColor: '#8957e5', background: '#0d1117'})
+                      }}
                       onClick={() => {
                         if (isSelected) {
                           setTimes(times.filter(x => !(x.date === t.date && x.time === t.time)));
@@ -504,7 +578,10 @@ export default function Booking() {
                         }
                       }}
                     >
-                      {new Date(t.date).toLocaleDateString('en-US', {weekday: 'short', month: 'numeric', day: 'numeric'})} {t.time}
+                      <div style={{fontWeight: 'bold'}}>{date.toLocaleDateString('en-US', {weekday: 'short', month: 'numeric', day: 'numeric'})}</div>
+                      <div style={{fontSize: '13px', color: isAfterSchool ? '#3fb950' : isWeekend ? '#8957e5' : '#c9d1d9'}}>{t.time}</div>
+                      {isAfterSchool && <div style={{fontSize: '10px', color: '#3fb950'}}>ðŸ« After School</div>}
+                      {isWeekend && <div style={{fontSize: '10px', color: '#8957e5'}}>ðŸŽ¯ Weekend</div>}
                     </button>
                   );
                 })}
