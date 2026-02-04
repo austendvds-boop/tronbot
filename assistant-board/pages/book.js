@@ -60,6 +60,10 @@ export default function Booking() {
   const [realAvailability, setRealAvailability] = useState(null);
   const [availLoading, setAvailLoading] = useState(false);
   const [unsupportedLocation, setUnsupportedLocation] = useState(false);
+  const [testMode, setTestMode] = useState(false);
+  
+  // Test Stripe link for webhook testing
+  const TEST_STRIPE_LINK = 'https://buy.stripe.com/dRm7sM9IT8K47pN5yG2ZO1l';
 
   const styles = {
     container: { maxWidth: '100%', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' },
@@ -213,7 +217,10 @@ export default function Booking() {
 
     // Use Payment Links (reliable)
     let stripeUrl;
-    if (useSpecialPricing) {
+    if (testMode) {
+      // Use $1 test link for webhook testing
+      stripeUrl = TEST_STRIPE_LINK;
+    } else if (useSpecialPricing) {
       stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
     } else {
       stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
@@ -439,10 +446,25 @@ export default function Booking() {
         <div style={styles.card}>
           <p><strong>{location?.name}</strong> â€¢ {pkg.name}</p>
           {useSpecialPricing && <p style={{color: '#58a6ff', fontSize: '14px'}}>Special pricing for {location.name}</p>}
-          <p style={styles.price}>${total}</p>
-          {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
-          <button style={{...styles.button, opacity: paymentLoading ? 0.7 : 1}} onClick={handlePayment} disabled={paymentLoading}>
-            {paymentLoading ? 'Loading...' : `Pay $${total} >`}
+          <p style={styles.price}>${testMode ? '$1 TEST' : '$' + total}</p>
+          {violation && !testMode && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
+          
+          {/* Test Mode Toggle */}
+          <div style={{marginBottom: '16px', padding: '12px', background: '#1f2937', borderRadius: '8px'}}>
+            <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+              <input 
+                type="checkbox" 
+                checked={testMode}
+                onChange={(e) => setTestMode(e.target.checked)}
+                style={{marginRight: '8px', width: '18px', height: '18px'}}
+              />
+              <span style={{color: '#f0883e', fontWeight: 'bold'}}>ðŸ§ª TEST MODE ($1)</span>
+            </label>
+            <p style={{fontSize: '12px', color: '#8b949e', margin: '4px 0 0 24px'}}>For webhook testing only</p>
+          </div>
+          
+          <button style={{...styles.button, opacity: paymentLoading ? 0.7 : 1, background: testMode ? '#f0883e' : '#238636'}} onClick={handlePayment} disabled={paymentLoading}>
+            {paymentLoading ? 'Loading...' : testMode ? 'Pay $1 (TEST) >' : `Pay $${total} >`}
           </button>
         </div>
       </div>
