@@ -66,13 +66,6 @@ export const locationConfig = {
     account: 'dad', 
     active: true 
   },
-  // Cave Creek - shared, uses Dad's calendar (44843029)
-  caveCreekDad: { 
-    name: 'Cave Creek', 
-    instructors: 'Allan, Brandon', 
-    account: 'dad', 
-    active: true 
-  },
   // Apache Junction - routes to Dad's calendar
   apacheJunction: { 
     name: 'Apache Junction', 
@@ -149,11 +142,11 @@ export const locationConfig = {
     active: true 
   },
   
-  // MIXED/SCOTTSDALE
+  // Scottsdale - Austen's for now (routing logic to be added later)
   scottsdale: { 
     name: 'Scottsdale', 
-    instructors: 'Alex, Ryan, Allan, Brandon, Freddy', 
-    account: 'both', 
+    instructors: 'Alex, Ryan', 
+    account: 'austen', 
     active: true 
   },
 };
@@ -240,17 +233,45 @@ export const zipToLocation = {
   '85128': 'casaGrande',
   '85193': 'casaGrande',
   
-  // Downtown Phoenix
+  // Downtown Phoenix (anything south of Glendale in Phoenix)
   '85003': 'downtownPhoenix',
   '85004': 'downtownPhoenix',
   '85006': 'downtownPhoenix',
   '85007': 'downtownPhoenix',
+  '85008': 'downtownPhoenix',
+  '85009': 'downtownPhoenix',
   '85012': 'downtownPhoenix',
   '85013': 'downtownPhoenix',
   '85014': 'downtownPhoenix',
   '85015': 'downtownPhoenix',
   '85016': 'downtownPhoenix',
+  '85017': 'downtownPhoenix',
   '85018': 'downtownPhoenix',
+  '85019': 'downtownPhoenix',
+  '85020': 'downtownPhoenix',
+  '85021': 'downtownPhoenix',
+  '85022': 'downtownPhoenix',
+  '85023': 'downtownPhoenix',
+  '85024': 'downtownPhoenix',
+  '85027': 'downtownPhoenix',
+  '85028': 'downtownPhoenix',
+  '85029': 'downtownPhoenix',
+  '85032': 'downtownPhoenix',
+  '85033': 'downtownPhoenix',
+  '85034': 'downtownPhoenix',
+  '85035': 'downtownPhoenix',
+  '85037': 'downtownPhoenix',
+  '85040': 'downtownPhoenix',
+  '85041': 'downtownPhoenix',
+  '85042': 'downtownPhoenix',
+  '85043': 'downtownPhoenix',
+  '85044': 'downtownPhoenix',
+  '85045': 'downtownPhoenix',
+  '85048': 'downtownPhoenix',
+  '85050': 'downtownPhoenix',
+  '85051': 'downtownPhoenix',
+  '85053': 'downtownPhoenix',
+  '85054': 'downtownPhoenix',
 };
 
 // Detect location from address components
