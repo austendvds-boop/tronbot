@@ -111,7 +111,7 @@ export default function Booking() {
                 <span style={{fontWeight: 'bold'}}>{p.name}</span>
                 <span style={styles.price}>${p.price}</span>
               </div>
-              <div style={{color: '#8b949e'}}>{p.lessons} lessons â€¢ {p.hours} hrs</div>
+              <div style={{color: '#8b949e'}}>{p.lessons} lessons, {p.hours} hrs</div>
             </div>
           ))}
           {pkg && <button style={styles.button} onClick={() => setStep(3)}>Select {pkg.lessons} Times &gt;</button>}
