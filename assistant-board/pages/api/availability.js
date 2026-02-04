@@ -15,6 +15,9 @@ const acuityConfig = {
 };
 
 // Correct appointment type IDs from Acuity
+// Special routing:
+// - El Mirage -> Dad's Surprise (50529929)
+// - Avondale, Goodyear, Tolleson, Buckeye -> Austen's West Valley (85088423)
 const appointmentTypes = {
   austen: {
     gilbert: '44842749',
@@ -29,15 +32,28 @@ const appointmentTypes = {
     downtownPhoenix: '50528736',
     queenCreek: '50528913',
     sanTanValley: '50528924',
-    westValley: '85088423'
+    westValley: '85088423',
+    // Cities routing to West Valley
+    avondale: '85088423',
+    goodyear: '85088423',
+    tolleson: '85088423',
+    buckeye: '85088423'
   },
   dad: {
     anthem: '50529545',
+    // Cave Creek uses Dad's calendar for some bookings
+    caveCreek: '44843029',
+    // Apache Junction routes to Dad
+    apacheJunction: '50528555',
     glendale: '50529778',
     northPhoenix: '50529846',
     peoria: '50529862',
+    // Scottsdale shared - uses Dad's calendar (44843350)
+    scottsdale: '44843350',
     sunCity: '50529915',
-    surprise: '50529929'
+    surprise: '50529929',
+    // El Mirage routes to Surprise
+    elMirage: '50529929'
   }
 };
 
