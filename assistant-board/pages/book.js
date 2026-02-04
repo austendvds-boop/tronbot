@@ -270,17 +270,11 @@ export default function Booking() {
 
     // Use Payment Links (reliable)
     let stripeUrl;
-    if (testMode) {
-      // Use $1 test link for webhook testing
-      stripeUrl = TEST_STRIPE_LINK;
-    } else if (useSpecialPricing) {
+    if (useSpecialPricing) {
       stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
     } else {
       stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
     }
-
-    // Note: Payment Links don't support client_reference_id
-    // Webhook will need to match by customer email or use a different method
 
     // Also store in localStorage as backup
     if (typeof window !== 'undefined') {
@@ -453,7 +447,7 @@ export default function Booking() {
       const day = date.getDay();
       const timeParsed = parseTime(t.time);
       if (!timeParsed) return true;
-      
+
       const totalMinutes = timeParsed.totalMinutes;
       const isWeekend = day === 0 || day === 6;
       const isWeekday = day >= 1 && day <= 5;
@@ -523,6 +517,22 @@ export default function Booking() {
                 </div>
               )}
 
+              {/* 1 Lesson Per Week Warning */}
+              <div style={{background: '#da3633', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px'}}>
+                <strong>âš ï¸ Important: 1 Lesson Per Week</strong>
+                <p style={{margin: '4px 0 0 0'}}>Please select times at least 7 days apart. Multiple lessons per week will incur a $50 surcharge.</p>
+              </div>
+
+              {/* Calendar View Toggle */}
+              <div style={{display: 'flex', justifyContent: 'flex-end', marginBottom: '12px'}}>
+                <button 
+                  style={{background: 'transparent', border: '1px solid #30363d', color: '#8b949e', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer'}}
+                  onClick={() => alert('Calendar view coming soon! Currently showing list view.')}
+                >
+                  ðŸ“… Calendar View (Soon)
+                </button>
+              </div>
+
               {/* After School Info */}
               {timeFilter === 'afterschool' && (
                 <div style={{background: '#238636', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px'}}>
@@ -538,7 +548,7 @@ export default function Booking() {
                     <strong>âš¡ Fastest Available</strong>
                     <p style={{margin: '4px 0 0 0'}}>{new Date(sortedTimes[0].date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})} at {sortedTimes[0].time}</p>
                   </div>
-                  <button 
+                  <button
                     style={{background: 'white', color: '#8957e5', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px'}}
                     onClick={() => {
                       if (times.length < pkg.lessons) {
@@ -560,12 +570,12 @@ export default function Booking() {
                   const isAfterSchool = timeParsed && timeParsed.totalMinutes >= 870; // After 2:30 PM
                   const date = new Date(t.date);
                   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                  
+
                   return (
                     <button
                       key={t.index}
                       style={{
-                        ...styles.timeBtn, 
+                        ...styles.timeBtn,
                         ...(isSelected && styles.timeSelected),
                         ...(isAfterSchool && !isSelected && {borderColor: '#238636', background: '#0d1117'}),
                         ...(isWeekend && !isSelected && {borderColor: '#8957e5', background: '#0d1117'})
@@ -610,24 +620,10 @@ export default function Booking() {
           <p><strong>{location?.name}</strong> â€¢ {pkg.name}</p>
           {useSpecialPricing && <p style={{color: '#58a6ff', fontSize: '14px'}}>Special pricing for {location.name}</p>}
           <p style={styles.price}>${testMode ? '$1 TEST' : '$' + total}</p>
-          {violation && !testMode && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
-
-          {/* Test Mode Toggle */}
-          <div style={{marginBottom: '16px', padding: '12px', background: '#1f2937', borderRadius: '8px'}}>
-            <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-              <input
-                type="checkbox"
-                checked={testMode}
-                onChange={(e) => setTestMode(e.target.checked)}
-                style={{marginRight: '8px', width: '18px', height: '18px'}}
-              />
-              <span style={{color: '#f0883e', fontWeight: 'bold'}}>ðŸ§ª TEST MODE ($1)</span>
-            </label>
-            <p style={{fontSize: '12px', color: '#8b949e', margin: '4px 0 0 24px'}}>For webhook testing only</p>
-          </div>
-
-          <button style={{...styles.button, opacity: paymentLoading ? 0.7 : 1, background: testMode ? '#f0883e' : '#238636'}} onClick={handlePayment} disabled={paymentLoading}>
-            {paymentLoading ? 'Loading...' : testMode ? 'Pay $1 (TEST) >' : `Pay $${total} >`}
+          {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
+          
+          <button style={{...styles.button, opacity: paymentLoading ? 0.7 : 1}} onClick={handlePayment} disabled={paymentLoading}>
+            {paymentLoading ? 'Loading...' : `Pay $${total} >`}
           </button>
         </div>
       </div>
@@ -690,34 +686,34 @@ export default function Booking() {
         </p>
 
         <h3 style={{marginBottom: '12px', color: '#58a6ff'}}>Student Details *</h3>
-        <input 
-          placeholder="First Name *" 
-          style={styles.input} 
+        <input
+          placeholder="First Name *"
+          style={styles.input}
           value={studentInfo.firstName}
           onChange={(e) => updateStudentInfo('firstName', e.target.value)}
           autoComplete="given-name"
           name="firstName"
         />
-        <input 
-          placeholder="Last Name *" 
+        <input
+          placeholder="Last Name *"
           style={styles.input}
           value={studentInfo.lastName}
           onChange={(e) => updateStudentInfo('lastName', e.target.value)}
           autoComplete="family-name"
           name="lastName"
         />
-        <input 
-          placeholder="Phone *" 
-          type="tel" 
+        <input
+          placeholder="Phone *"
+          type="tel"
           style={styles.input}
           value={studentInfo.phone}
           onChange={(e) => updateStudentInfo('phone', e.target.value)}
           autoComplete="tel"
           name="phone"
         />
-        <input 
-          placeholder="Email *" 
-          type="email" 
+        <input
+          placeholder="Email *"
+          type="email"
           style={styles.input}
           value={studentInfo.email}
           onChange={(e) => updateStudentInfo('email', e.target.value)}
