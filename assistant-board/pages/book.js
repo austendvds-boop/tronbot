@@ -4,7 +4,7 @@ import { locationConfig, detectLocationFromAddress } from '../data/locations.js'
 
 const packages = {
   ultimate: { name: 'Ultimate Package', price: 1299, lessons: 8, hours: 20, stripeBase: 'https://buy.stripe.com/5kQ6oI8EP6BW4dBaT02ZO1f', stripeUpcharge: 'https://buy.stripe.com/dRm7sM8EP5xS39x5yG2ZO1d' },
-  license: { name: 'License Ready Package', price: 680, lessons: 4, hours: 10, stripeBase: 'https://buy.stripe.com/aFaeVe8EP4tO5hF9OW2ZO1b', stripeUpcharge: 'https://buy.stripe.com/bJedRa6wH2lGh0n2mu2ZO1c' },
+  license: { name: 'License Ready Package', price: 680, lessons: 4, hours: 10, stripeBase: 'https://buy.stripe.com/aFaeVe8EP4tO5hF9OW2ZO1b', stripeUpcharge: 'https://buy.stripe.com/bJedRa6wH2lGh0n2mu2ZO1c', stripeSpecialBase: 'https://buy.stripe.com/fZu5kE2gr7G0bG38KS2ZO1j', stripeSpecialUpcharge: 'https://buy.stripe.com/3cI7sM3kvd0k8tR5yG2ZO1k', specialPrice: 700 },
   intro: { name: 'Intro to Driving', price: 350, lessons: 2, hours: 5, stripeBase: 'https://buy.stripe.com/00w9AUaMX2lG5hF4uC2ZO1g', stripeUpcharge: 'https://buy.stripe.com/cNi3cwdZ99O86lJaT02ZO1h' },
   express: { name: 'Express Lesson', price: 200, lessons: 1, hours: 2.5, stripeBase: 'https://buy.stripe.com/00wbJ2dZ9gcweSf1iq2ZO1i', stripeUpcharge: null }
 };
@@ -302,8 +302,15 @@ export default function Booking() {
         }
       }
     }
+    
+    // Check for special pricing locations (Casa Grande, West Valley)
+    const isSpecialLocation = location?.name === 'Casa Grande' || location?.name === 'West Valley';
+    const isLicensePackage = pkg.name === 'License Ready Package';
+    const useSpecialPricing = isSpecialLocation && isLicensePackage && pkg.stripeSpecialBase;
+    
+    const basePrice = useSpecialPricing ? pkg.specialPrice : pkg.price;
     const surcharge = violation ? 50 : 0;
-    const total = pkg.price + surcharge;
+    const total = basePrice + surcharge;
 
     return (
       <div style={styles.container}>
@@ -311,10 +318,16 @@ export default function Booking() {
         <div style={styles.header}><h1 style={styles.title}>Complete Payment</h1></div>
         <div style={styles.card}>
           <p><strong>{location?.name}</strong> â€¢ {pkg.name}</p>
+          {useSpecialPricing && <p style={{color: '#58a6ff', fontSize: '14px'}}>Special pricing for {location.name}</p>}
           <p style={styles.price}>${total}</p>
           {violation && <p style={{color: '#da3633'}}>+$50 surcharge applied</p>}
           <button style={styles.button} onClick={() => {
-            const stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
+            let stripeUrl;
+            if (useSpecialPricing) {
+              stripeUrl = violation && pkg.stripeSpecialUpcharge ? pkg.stripeSpecialUpcharge : pkg.stripeSpecialBase;
+            } else {
+              stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
+            }
             window.location.href = stripeUrl;
           }}>
             Pay ${total} &gt;
