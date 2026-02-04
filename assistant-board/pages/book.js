@@ -279,10 +279,8 @@ export default function Booking() {
       stripeUrl = violation && pkg.stripeUpcharge ? pkg.stripeUpcharge : pkg.stripeBase;
     }
 
-    // Append booking ID as client_reference_id for webhook to retrieve
-    if (bookingId) {
-      stripeUrl += `?client_reference_id=${encodeURIComponent(bookingId)}`;
-    }
+    // Note: Payment Links don't support client_reference_id
+    // Webhook will need to match by customer email or use a different method
 
     // Also store in localStorage as backup
     if (typeof window !== 'undefined') {
